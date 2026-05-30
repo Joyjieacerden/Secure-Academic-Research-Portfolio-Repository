@@ -1,0 +1,15 @@
+# Python virtual environment
+.venv/
+venv/
+ENV/
+
+# Django database
+*.sqlite3
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment variables (if you use them later)
+.env
