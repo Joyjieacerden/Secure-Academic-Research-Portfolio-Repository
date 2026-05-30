@@ -13,3 +13,5 @@ __pycache__/
 
 # Environment variables (if you use them later)
 .env
+
+staticfiles/
