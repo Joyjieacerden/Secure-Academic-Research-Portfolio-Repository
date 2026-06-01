@@ -1,11 +1,15 @@
 from django.contrib.auth.models import Group, Permission
+from django.contrib.contenttypes.models import ContentType
 from django.core.management.base import BaseCommand
+from research_repo.models import Publication 
 
 
 class Command(BaseCommand):
     help = 'Set up user groups and permissions for the research repository'
 
     def handle(self, *args, **options):
+
+        content_type = ContentType.objects.get_for_model(Publication)
 
         groups_permissions = {
             'Faculty': [
@@ -27,6 +31,18 @@ class Command(BaseCommand):
             ],
         }
 
+        custom_permissions = [
+            ("download_publication", "Can download publication"),
+            ("review_publication", "Can review publication"),
+        ]
+
+        for codename, name in custom_permissions:
+            Permission.objects.get_or_create(
+                codename=codename,
+                content_type=content_type,
+                defaults={"name": name},
+            )
+
         for group_name, perms in groups_permissions.items():
             group, created = Group.objects.get_or_create(name=group_name)
 
@@ -35,19 +51,20 @@ class Command(BaseCommand):
             else:
                 self.stdout.write(self.style.WARNING(f'Updating group: {group_name}'))
 
-            # Reset permissions (safe re-sync)
             group.permissions.clear()
 
             for perm_codename in perms:
-                try:
-                    perm = Permission.objects.get(codename=perm_codename)
+                perm = Permission.objects.filter(
+                    codename=perm_codename,
+                    content_type=content_type
+                ).first()
+
+                if perm:
                     group.permissions.add(perm)
                     self.stdout.write(
-                        self.style.SUCCESS(
-                            f'Added "{perm_codename}" → {group_name}'
-                        )
+                        self.style.SUCCESS(f'Added "{perm_codename}" → {group_name}')
                     )
-                except Permission.DoesNotExist:
+                else:
                     self.stdout.write(
                         self.style.ERROR(f'Permission not found: {perm_codename}')
                     )

@@ -2,7 +2,8 @@ from django.shortcuts import render,redirect,get_object_or_404
 from django.contrib.auth import login, authenticate, logout
 from .forms import UserRegisterForm, PortfolioForm, PublicationForm, ReviewerAssignmentForm,LoginForm
 from .models import User, Portfolio, Publication, ReviewerAssignment
-from django.views.generic import CreateView, DetailView, ListView, UpdateView, DeleteView,LoginView
+from django.views.generic import CreateView, DetailView, ListView, UpdateView, DeleteView
+from django.contrib.auth.views import LoginView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin,PermissionRequiredMixin
 
 
@@ -31,12 +32,6 @@ class UserLoginView(LoginView):
         if self.request.user.is_authenticated:
             return redirect('home')
         return super().form_valid(form)
-    
-class LogoutView(LoginRequiredMixin, UserPassesTestMixin,PermissionRequiredMixin):
-    def get(self, request):
-        logout(request)
-        return redirect('login')
-    
     
     
         

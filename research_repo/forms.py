@@ -1,4 +1,4 @@
-from django.forms import ModelForm,InlineFormSet
+from django.forms import ModelForm,inlineformset_factory
 from django.contrib.auth.forms import UserCreationForm
 from .models import User, Portfolio, Publication,ReviewerAssignment
 
@@ -16,7 +16,7 @@ class LoginForm(ModelForm):
 class PortfolioForm(ModelForm):
     class Meta:
         model = Portfolio
-        fields = ['user_description', 'id_document']
+        fields = ['user_description', 'id_document_url']
 
 class PublicationForm(ModelForm):
     class Meta:
