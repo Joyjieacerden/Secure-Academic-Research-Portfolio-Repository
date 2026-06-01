@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'research_repo',
     'cloudinary_storage', 
     'cloudinary',
 ]
@@ -155,3 +156,5 @@ DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 # Do NOT set MEDIA_ROOT when using cloud storage
 # MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Comment this out
+
+AUTH_USER_MODEL = 'research_repo.User'
