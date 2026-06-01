@@ -33,5 +33,20 @@ class UserLoginView(LoginView):
             return redirect('home')
         return super().form_valid(form)
     
+class PortfolioCreateView(LoginRequiredMixin, CreateView,PermissionRequiredMixin,UserPassesTestMixin):
+    model = Portfolio
+    form_class = PortfolioForm
+    template_name = 'research_repo/portfolio_form.html'
+    success_url = '/'
+    permission_required = 'research_repo.add_portfolio'
+
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        return super().form_valid(form)
+    
+    def test_func(self):
+        return self.request.user.is_authenticated and self.request.user.role in ['FACULTY', 'PEER_REVIEWER']
+    
     
         
