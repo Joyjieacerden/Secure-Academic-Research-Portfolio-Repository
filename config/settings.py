@@ -14,17 +14,11 @@ from pathlib import Path
 import os
 import dj_database_url
 from dotenv import load_dotenv
-import cloudinary
+
 
 # Ensure Django loads your .env variables
 load_dotenv()
 
-# Initialize Cloudinary SDK with credentials
-cloudinary.config(
-    cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
-    api_key=os.getenv('CLOUDINARY_API_KEY'),
-    api_secret=os.getenv('CLOUDINARY_API_SECRET'),
-)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -39,7 +33,8 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'fallback-insecure-key-for-local-onl
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
+# Dynamic allowed hosts handling for seamless deployment infrastructure
+ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 
 
 # Application definition
@@ -50,9 +45,9 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'cloudinary_storage', 
     'django.contrib.staticfiles',
     'research_repo',
-    'cloudinary_storage', 
     'cloudinary',
 ]
 
@@ -142,7 +137,7 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files configuration for Cloudinary
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 
 # Cloudinary Settings
 CLOUDINARY_STORAGE = {
@@ -154,7 +149,6 @@ CLOUDINARY_STORAGE = {
 # Use Cloudinary for media storage
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
-# Do NOT set MEDIA_ROOT when using cloud storage
-# MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Comment this out
+
 
 AUTH_USER_MODEL = 'research_repo.User'
