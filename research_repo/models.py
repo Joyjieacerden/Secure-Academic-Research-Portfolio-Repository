@@ -28,7 +28,7 @@ class User(AbstractUser):
     
 class Portfolio(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='portfolio')
-    user_description = models.Charield(max_length=500, blank=True)
+    user_description = models.CharField(max_length=500, blank=True)
     id_document_url = models.URLField(max_length=200)
 
     def __str__(self):
@@ -39,7 +39,7 @@ class Publication(models.Model):
     abstract = models.TextField()
     full_pdf_url = models.URLField(max_length=200)
     created_at = models.DateTimeField(auto_now_add=True)
-    uploader = models.ForeignKey(User, ondelete=models.CASCADE, related_name='uploaded_publications')
+    uploader = models.ForeignKey(User, on_delete=models.CASCADE, related_name='uploaded_publications')
 
     def __str__(self):
         return self.title
@@ -47,7 +47,7 @@ class Publication(models.Model):
 class Authorship(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
-    contribution_role = models.CharField(max_field=50)
+    contribution_role = models.CharField(max_length=50)
 
 class AccessGrant(models.Model):
     publication = models.ForeignKey(Publication, on_delete=models.CASCADE, related_name='grants' )
