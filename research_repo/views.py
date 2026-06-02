@@ -48,5 +48,12 @@ class PortfolioCreateView(LoginRequiredMixin, CreateView,PermissionRequiredMixin
     def test_func(self):
         return self.request.user.is_authenticated and self.request.user.role in ['FACULTY', 'PEER_REVIEWER']
     
+class PortfolioDetailView(LoginRequiredMixin, DetailView):
+    model = Portfolio
+    template_name = 'research_repo/portfolio_detail.html'
+    context_object_name = 'portfolio'
+
+    
+    
     
         
