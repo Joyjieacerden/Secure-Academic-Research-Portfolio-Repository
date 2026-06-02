@@ -1,6 +1,6 @@
 from django.forms import ModelForm,inlineformset_factory
 from django.contrib.auth.forms import UserCreationForm
-from .models import User, Portfolio, Publication,ReviewerAssignment
+from .models import AccessGrant, User, Portfolio, Publication,Authorship
 
 
 class UserRegisterForm(UserCreationForm):
@@ -18,13 +18,10 @@ class PortfolioForm(ModelForm):
         model = Portfolio
         fields = ['user_description', 'id_document_url']
 
-class PublicationForm(ModelForm):
+class PublicationForm(inlineformset_factory( Publication, Authorship, fields=['contribution_role'], extra=1)):
     class Meta:
         model = Publication
         fields = ['title', 'abstract', 'full_pdf_url']
 
-class ReviewerAssignmentForm(ModelForm):
-    class Meta:
-        model = ReviewerAssignment
-        fields = ['publication', 'reviewer', 'expires_at']
+
 
