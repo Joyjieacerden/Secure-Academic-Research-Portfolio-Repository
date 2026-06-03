@@ -1,6 +1,6 @@
 from django.utils import timezone
 from django.shortcuts import render, redirect, get_object_or_404
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView,TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin,PermissionRequiredMixin
 from django.contrib.auth.views import LoginView, LogoutView
 from django.urls import reverse_lazy
@@ -11,7 +11,7 @@ from .forms import PublicationForm, AuthorshipFormSet, SignUpForm, LoginForm, Up
 
 
 class LoginView(LoginView):
-    template_name = 'research_repo/login.html'
+    template_name = 'login.html'
     form_class = LoginForm
     success_url = reverse_lazy('publication-list')
 
@@ -24,37 +24,52 @@ class LogoutView(LoginRequiredMixin, LogoutView):
 class SignUpView(CreateView):
     model = User
     form_class = SignUpForm
-    template_name = 'research_repo/signup.html'
+    template_name = 'signup.html'
     success_url = reverse_lazy('login')
 
+class DeleteAccountView(LoginRequiredMixin,DeleteView):
+    model = User
+    template_name = 'accouont_removal.html'
+    success_url = reverse_lazy('/')
 
-class PublicationListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    def get_object(self, queryset = None):
+        return self.request.user
+        
+
+class PublicationListView(LoginRequiredMixin, ListView):
     model = Publication
-    template_name = 'research_repo/publication_list.html'
+    template_name = 'publication_list.html'
     context_object_name = 'publications'
 
     def get_queryset(self):
         user = self.request.user
+        query = self.request.GET.get('q', '').strip()
 
-        if user.is_authenticated:
-            return Publication.objects.filter(
-                Q(is_public=True) |
-                Q(grants__viewer=user,
-                  grants__access_granted=True,
-                  grants__expires_at__gt=timezone.now()) |
-                Q(uploader=user) |
-                Q(authors__user=user)
-            ).distinct()
+        # 🔐 Base RBAC filter
+        queryset = Publication.objects.filter(
+            Q(is_public=True) |
+            Q(grants__viewer=user,
+              grants__access_granted=True,
+              grants__expires_at__gt=timezone.now()) |
+            Q(uploader=user) |
+            Q(authors__user=user)
+        ).distinct()
 
-        return Publication.objects.filter(is_public=True)
+        # 🔍 Search layer
+        if query:
+            queryset = queryset.filter(
+                Q(title__icontains=query) |
+                Q(abstract__icontains=query)
+            )
 
-    def test_func(self):
-        return self.request.user.is_authenticated
+        return queryset
+    
+       
     
 
 class PublicationDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
     model = Publication
-    template_name = 'research_repo/publication_detail.html'
+    template_name = 'publication_detail.html'
     context_object_name = 'publication'
 
     def test_func(self):
@@ -79,7 +94,7 @@ class PublicationDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView)
 class PublicationCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     model = Publication
     form_class = PublicationForm
-    template_name = 'research_repo/publication_form.html'
+    template_name = 'publication_form.html'
     success_url = reverse_lazy('publication_list')
 
     def test_func(self):
@@ -114,7 +129,7 @@ class PublicationCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView)
 class PublicationUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Publication
     form_class = PublicationForm
-    template_name = 'research_repo/publication_form.html'
+    template_name = 'publication_form.html'
     success_url = reverse_lazy('publication_list')
 
     def test_func(self):
@@ -154,7 +169,7 @@ class PublicationDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView)
     
 class UploadDocumentView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     form_class = UploadDocumentForm
-    template_name = 'research_repo/upload_document.html'
+    template_name = 'upload_document.html'
     success_url = reverse_lazy('publication_list')
 
     def test_func(self):
@@ -169,7 +184,7 @@ class UploadDocumentView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
 class AccessGrantCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     model = AccessGrant
     form_class = AccessGrantForm
-    template_name = 'research_repo/access_grant_form.html'
+    template_name = 'access_grant_form.html'
     success_url = reverse_lazy('publication_list')
 
     def get_publication(self):
@@ -192,3 +207,15 @@ class AccessGrantCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView)
     def form_valid(self, form):
         form.instance.publication = self.get_publication()
         return super().form_valid(form)
+    
+class SettingsView(LoginRequiredMixin, TemplateView):
+    template_name = 'settings.html'
+
+
+class DashboardView(LoginRequiredMixin, DetailView):
+    model = Publication
+    template_name = 'dashboard.html'
+    context_object_name = 'publication'
+
+
+    
