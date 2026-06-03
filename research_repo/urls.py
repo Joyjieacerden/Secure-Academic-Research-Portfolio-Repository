@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import LoginView, PublicationListView, PublicationDetailView, LogoutView, SignUpView, PublicationCreateView, PublicationUpdateView, PublicationDeleteView, UploadDocumentView
+from .views import LoginView, PublicationListView, PublicationDetailView, LogoutView, SignUpView, PublicationCreateView, PublicationUpdateView, PublicationDeleteView, UploadDocumentView,AccessGrantCreateView
 
 urlpatterns = [
     path('login/', LoginView.as_view(), name='login'),
@@ -11,4 +11,5 @@ urlpatterns = [
     path('publications/<int:pk>/update/', PublicationUpdateView.as_view(), name='publication_update'),
     path('publications/<int:pk>/delete/', PublicationDeleteView.as_view(), name='publication_delete'),
     path('upload-document/', UploadDocumentView.as_view(), name='upload_document'),
+    path('access-grant/',AccessGrantCreateView.as_view(), name = 'grant_access')
 ]
