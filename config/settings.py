@@ -54,6 +54,8 @@ INSTALLED_APPS = [
     'research_repo',
     'cloudinary_storage', 
     'cloudinary',
+    'publication_api',
+    'rest_framework', 
 ]
 
 print(f"DEBUG: Cloud Name is {os.getenv('CLOUDINARY_CLOUD_NAME')}")
