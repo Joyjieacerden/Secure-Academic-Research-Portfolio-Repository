@@ -6,6 +6,8 @@ from datetime import timedelta
 class User(AbstractUser):
     is_faculty = models.BooleanField(default=False)
     is_identity_verified = models.BooleanField(default=False)
+    verified_at = models.DateTimeField(null=True, blank=True)
+    verified_by = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL, related_name='verified_users')
     description = models.TextField(blank=True, null=True, verbose_name="User Description")
     id_document_url = models.URLField(blank=True, null=True)
 
@@ -46,6 +48,7 @@ class AccessGrant(models.Model):
     viewer = models.ForeignKey(User, on_delete=models.CASCADE)
     access_granted = models.BooleanField(default=False)
     expires_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
         if not self.expires_at:
