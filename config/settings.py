@@ -36,6 +36,10 @@ DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
 # Dynamic allowed hosts handling for seamless deployment infrastructure
 ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 
+AUTH_USER_MODEL = 'research_repo.User'
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/login/'
 
 # Application definition
 
@@ -49,6 +53,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'research_repo',
     'cloudinary',
+    'publication_api',
+    'rest_framework', 
 ]
 
 print(f"DEBUG: Cloud Name is {os.getenv('CLOUDINARY_CLOUD_NAME')}")
@@ -80,6 +86,22 @@ TEMPLATES = [
         },
     },
 ]
+
+REST_FRAMEWORK = {
+
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/day',
+        'user': '1000/day'
+    }
+}
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
