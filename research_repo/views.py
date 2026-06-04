@@ -1,3 +1,4 @@
+import cloudinary.uploader  # <--- cloudinary
 from django.utils import timezone
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView,TemplateView
@@ -7,6 +8,7 @@ from django.urls import reverse_lazy
 from .models import Publication, User, AccessGrant
 from django.db.models import Q
 from .forms import PublicationForm, AuthorshipFormSet, SignUpForm, LoginForm, UploadDocumentForm,AccessGrantForm
+from django.http import HttpResponseRedirect
 
 
 
@@ -90,7 +92,9 @@ class PublicationDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView)
                 expires_at__gt=timezone.now()
             ).exists()
         )
-    
+        
+# file modified
+
 class PublicationCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     model = Publication
     form_class = PublicationForm
@@ -102,29 +106,59 @@ class PublicationCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView)
 
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
-
         if self.request.POST:
-            data['authorship_formset'] = AuthorshipFormSet(self.request.POST)
+            data['authorship_formset'] = AuthorshipFormSet(self.request.POST, self.request.FILES)
         else:
             data['authorship_formset'] = AuthorshipFormSet()
-
         return data
 
     def form_valid(self, form):
         context = self.get_context_data()
         authorship_formset = context['authorship_formset']
 
+        # 1. Validate the formset (the form is already validated by this stage)
         if authorship_formset.is_valid():
+            
+            # 2. Grab the uploaded PDF file from request.FILES
+            pdf_file = self.request.FILES.get('full_pdf_url') 
+
+            if not pdf_file:
+                form.add_error('full_pdf_url', 'Please upload a valid PDF document.')
+                return self.form_invalid(form)
+
+            try:
+                # 3. Push the file directly to Cloudinary
+                upload_result = cloudinary.uploader.upload(
+                    pdf_file,
+                    folder="Scholar_Archive",         
+                    resource_type="raw"     
+                )
+                
+                # 4. Pull the resulting secure URL
+                cloudinary_url = upload_result.get('secure_url')
+                
+            except Exception as e:
+                form.add_error(None, f"Cloudinary Upload Failed: {str(e)}")
+                return self.form_invalid(form)
+
+            # 5. Build the object structure without hitting the DB yet
             self.object = form.save(commit=False)
             self.object.uploader = self.request.user
-            self.object.save()
+            self.object.full_pdf_url = cloudinary_url  # Injects Cloudinary link
+            self.object.save()  # <--- Database save #1 (Publication object now gets an ID)
 
+            # 6. Bind and process authors formset data
             authorship_formset.instance = self.object
-            authorship_formset.save()
+            authorship_formset.save()  # <--- Database save #2 (Authorship links)
 
-            return super().form_valid(form)
+            # 7. SUCCESS: Redirect cleanly to your success_url
+            # This replaces super().form_valid(form) to prevent Django from double-saving
+            return HttpResponseRedirect(self.get_success_url())
 
+        # If the formset is invalid, drop down to form_invalid workflow
         return self.form_invalid(form)
+    
+#file modified end
     
 class PublicationUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Publication
