@@ -103,16 +103,16 @@ class PublicationSerializer(serializers.ModelSerializer):
                 publications = []
 
             # Determine Premium / Reviewer status using built-in Django Group memberships
-            is_premium_or_reviewer = False
+            is_faculty_or_reviewer = False
             if user and user.is_authenticated:
-                is_premium_or_reviewer = (
+                is_faculty_or_reviewer = (
                     user.is_superuser or 
                     user.is_faculty or 
                     user.groups.filter(name__in=['Reviewers', 'Premium Engines']).exists()
                 )
 
             # If the consumer is basic or unauthenticated, audit column protection
-            if not is_premium_or_reviewer:
+            if not is_faculty_or_reviewer:
                 # If a specific publication is being analyzed, honor custom AccessGrant/Owner methods
                 if publications and user and user.is_authenticated:
                     pub = publications[0]
