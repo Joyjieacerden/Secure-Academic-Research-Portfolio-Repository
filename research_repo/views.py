@@ -120,10 +120,10 @@ class PublicationCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView)
         if authorship_formset.is_valid():
             
             # 2. Grab the uploaded PDF file from request.FILES
-            pdf_file = self.request.FILES.get('full_pdf_url') 
+            pdf_file = self.request.FILES.get('full_pdf') 
 
             if not pdf_file:
-                form.add_error('full_pdf_url', 'Please upload a valid PDF document.')
+                form.add_error('full_pdf', 'Please upload a valid PDF document.')
                 return self.form_invalid(form)
 
             try:
@@ -144,7 +144,7 @@ class PublicationCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView)
             # 5. Build the object structure without hitting the DB yet
             self.object = form.save(commit=False)
             self.object.uploader = self.request.user
-            self.object.full_pdf_url = cloudinary_url  # Injects Cloudinary link
+            self.object.full_pdf = cloudinary_url  # Injects Cloudinary link
             self.object.save()  # <--- Database save #1 (Publication object now gets an ID)
 
             # 6. Bind and process authors formset data

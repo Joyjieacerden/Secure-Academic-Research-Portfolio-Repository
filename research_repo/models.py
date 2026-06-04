@@ -2,6 +2,10 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser, Group
 from django.utils import timezone
 from datetime import timedelta
+from cloudinary_storage.storage import  MediaCloudinaryStorage
+from cloudinary.models import CloudinaryField
+
+
 
 class User(AbstractUser):
     is_faculty = models.BooleanField(default=False)
@@ -9,7 +13,8 @@ class User(AbstractUser):
     verified_at = models.DateTimeField(null=True, blank=True)
     verified_by = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL, related_name='verified_users')
     description = models.TextField(blank=True, null=True, verbose_name="User Description")
-    id_document_url = models.URLField(blank=True, null=True)
+    id_document = CloudinaryField('image', blank=True, null=True)
+
 
     def __str__(self):
         return self.username
@@ -27,7 +32,8 @@ class User(AbstractUser):
 class Publication(models.Model):
     title = models.CharField(max_length=255)
     abstract = models.TextField()
-    full_pdf_url = models.URLField()
+    full_pdf = models.FileField(upload_to='publications/', storage=MediaCloudinaryStorage(), blank=True, null=True)
+        
     is_public = models.BooleanField(default=False)
     auto_approve_access = models.BooleanField(default=False)
     uploader = models.ForeignKey(User, on_delete=models.CASCADE, related_name='uploaded_publications')
@@ -37,6 +43,7 @@ class Publication(models.Model):
     
     def is_owner_or_author(self, user):
         return self.uploader == user or self.authors.filter(user=user).exists()
+    
 
 class Authorship(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='authored_publications')

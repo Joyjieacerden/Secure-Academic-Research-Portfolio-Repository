@@ -24,16 +24,15 @@ class SignUpForm(UserCreationForm):
 class PublicationForm(ModelForm):
     class Meta:
         model = Publication
-        fields = ['title', 'abstract', 'full_pdf_url', 'is_public', 'auto_approve_access']
+        fields = ['title', 'abstract', 'full_pdf', 'is_public', 'auto_approve_access']
         
         # Override the default widget so it acts as a file upload field
         widgets = {
-            'full_pdf_url': forms.FileInput(attrs={
+            'full_pdf': forms.FileInput(attrs={
                 'accept': '.pdf',  # Optional: Restricts the file picker to only show PDFs
                 'class': 'form-control' # Optional: Add your CSS/Bootstrap styling class here
             }),
-        }
-        
+        }    
 # end
 
 class AuthorshipForm(ModelForm):
@@ -46,10 +45,10 @@ AuthorshipFormSet = inlineformset_factory(Publication, Authorship, form=Authorsh
 
 class UploadDocumentForm(Form):
     class Meta:
-        fields = ['title', 'abstract', 'full_pdf_url', 'is_public', 'auto_approve_access']
+        fields = ['title', 'abstract', 'full_pdf', 'is_public', 'auto_approve_access']
 
     def clean_full_pdf_url(self):
-        file = self.cleaned_data.get('full_pdf_url')
+        file = self.cleaned_data.get('full_pdf')
         if file:
             try:
                 result = cloudinary.uploader.upload(file)
