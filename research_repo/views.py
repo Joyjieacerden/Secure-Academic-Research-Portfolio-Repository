@@ -1,21 +1,21 @@
-import cloudinary.uploader  # <--- cloudinary
 from django.utils import timezone
+from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView,TemplateView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView,TemplateView, View
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin,PermissionRequiredMixin
 from django.contrib.auth.views import LoginView, LogoutView
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
+from django.core.mail import send_mail
+from django.utils.crypto import get_random_string
+from django.conf import settings
 from .models import Publication, User, AccessGrant
 from django.db.models import Q
 from .forms import PublicationForm, AuthorshipFormSet, SignUpForm, LoginForm, UploadDocumentForm,AccessGrantForm
-from django.http import HttpResponseRedirect
-
-
 
 class LoginView(LoginView):
-    template_name = 'login.html'
+    template_name = 'research_repo/login.html'
     form_class = LoginForm
-    success_url = reverse_lazy('publication-list')
+    success_url = reverse_lazy('publication_list')
 
     def get_queryset(self):
         return Publication.objects.filter(is_public=True)
@@ -26,12 +26,47 @@ class LogoutView(LoginRequiredMixin, LogoutView):
 class SignUpView(CreateView):
     model = User
     form_class = SignUpForm
-    template_name = 'signup.html'
+    template_name = 'research_repo/signup.html'
     success_url = reverse_lazy('login')
 
+    def form_valid(self, form):
+        # 1. Save the user, but don't mark them as active/verified yet
+        user = form.save(commit=False)
+        user.is_active = False # They cannot log in until verified
+        user.email_verification_token = get_random_string(64)
+        user.save()
+
+        # 2. Send the verification email
+        verification_link = self.request.build_absolute_uri(
+            reverse('verify_email', kwargs={'token': user.email_verification_token})
+        )
+        
+        send_mail(
+            'Verify your ScholarVault Account',
+            f'Hi {user.username}, please click the link below to verify your account:\n{verification_link}',
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            fail_silently=False,
+        )
+        
+        # 3. Inform the user to check their email
+        return HttpResponse("Registration successful! Please check your email to verify your account.")
+
+class VerifyEmailView(View):
+    def get(self, request, token, *args, **kwargs):
+        # We use filter() instead of get_object_or_404 to handle errors gracefully
+        user = get_object_or_404(User, email_verification_token=token)
+        
+        user.is_active = True
+        user.is_email_verified = True
+        user.email_verification_token = None
+        user.save()
+        
+        return HttpResponse("Email verified! You can now log in.")
+    
 class DeleteAccountView(LoginRequiredMixin,DeleteView):
     model = User
-    template_name = 'account_removal.html'
+    template_name = 'research_repo/account_removal.html'
     success_url = reverse_lazy('/')
 
     def get_object(self, queryset = None):
@@ -40,14 +75,14 @@ class DeleteAccountView(LoginRequiredMixin,DeleteView):
 
 class PublicationListView(LoginRequiredMixin, ListView):
     model = Publication
-    template_name = 'publication_list.html'
+    template_name = 'research_repo/publication_list.html'
     context_object_name = 'publications'
 
     def get_queryset(self):
         user = self.request.user
         query = self.request.GET.get('q', '').strip()
 
-        #  Base RBAC filter
+        # 🔐 Base RBAC filter
         queryset = Publication.objects.filter(
             Q(is_public=True) |
             Q(grants__viewer=user,
@@ -57,7 +92,7 @@ class PublicationListView(LoginRequiredMixin, ListView):
             Q(authors__user=user)
         ).distinct()
 
-        #  Search layer
+        # 🔍 Search layer
         if query:
             queryset = queryset.filter(
                 Q(title__icontains=query) |
@@ -65,13 +100,10 @@ class PublicationListView(LoginRequiredMixin, ListView):
             )
 
         return queryset
-    
-       
-    
 
 class PublicationDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
     model = Publication
-    template_name = 'publication_detail.html'
+    template_name = 'research_repo/publication_detail.html'
     context_object_name = 'publication'
 
     def test_func(self):
@@ -92,13 +124,11 @@ class PublicationDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView)
                 expires_at__gt=timezone.now()
             ).exists()
         )
-        
-# file modified
-
+    
 class PublicationCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     model = Publication
     form_class = PublicationForm
-    template_name = 'publication_form.html'
+    template_name = 'research_repo/publication_form.html'
     success_url = reverse_lazy('publication_list')
 
     def test_func(self):
@@ -106,59 +136,29 @@ class PublicationCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView)
 
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
+
         if self.request.POST:
-            data['authorship_formset'] = AuthorshipFormSet(self.request.POST, self.request.FILES)
+            data['authorship_formset'] = AuthorshipFormSet(self.request.POST)
         else:
             data['authorship_formset'] = AuthorshipFormSet()
+
         return data
 
     def form_valid(self, form):
         context = self.get_context_data()
         authorship_formset = context['authorship_formset']
 
-        # 1. Validate the formset (the form is already validated by this stage)
         if authorship_formset.is_valid():
-            
-            # 2. Grab the uploaded PDF file from request.FILES
-            pdf_file = self.request.FILES.get('full_pdf') 
-
-            if not pdf_file:
-                form.add_error('full_pdf', 'Please upload a valid PDF document.')
-                return self.form_invalid(form)
-
-            try:
-                # 3. Push the file directly to Cloudinary
-                upload_result = cloudinary.uploader.upload(
-                    pdf_file,
-                    folder="Scholar_Archive",         
-                    resource_type="raw"     
-                )
-                
-                # 4. Pull the resulting secure URL
-                cloudinary_url = upload_result.get('secure_url')
-                
-            except Exception as e:
-                form.add_error(None, f"Cloudinary Upload Failed: {str(e)}")
-                return self.form_invalid(form)
-
-            # 5. Build the object structure without hitting the DB yet
             self.object = form.save(commit=False)
             self.object.uploader = self.request.user
-            self.object.full_pdf = cloudinary_url  # Injects Cloudinary link
-            self.object.save()  # <--- Database save #1 (Publication object now gets an ID)
+            self.object.save()
 
-            # 6. Bind and process authors formset data
             authorship_formset.instance = self.object
-            authorship_formset.save()  # <--- Database save #2 (Authorship links)
+            authorship_formset.save()
 
-            # 7. SUCCESS: Redirect cleanly to your success_url
-            # This replaces super().form_valid(form) to prevent Django from double-saving
-            return HttpResponseRedirect(self.get_success_url())
+            return super().form_valid(form)
 
-        # If the formset is invalid, drop down to form_invalid workflow
         return self.form_invalid(form)
-    
-#file modified end
     
 class PublicationUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Publication
@@ -251,15 +251,10 @@ class DashboardView(LoginRequiredMixin, DetailView):
     template_name = 'dashboard.html'
     context_object_name = 'publication'
 
+class DiscoveryView(TemplateView):
+    template_name = 'research_repo/discovery.html'
 
-    
-REST_FRAMEWORK = {
-    'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.AnonRateThrottle',
-        'rest_framework.throttling.UserRateThrottle'
-    ],
-    'DEFAULT_THROTTLE_RATES': {
-        'anon': '100/day',
-        'user': '1000/day'
-    }
-}
+    def get(self, request, *args, **kwargs):
+        # HARD DIAGNOSTIC: Does this reach the view?
+        print("DiscoveryView reached!") 
+        return super().get(request, *args, **kwargs)

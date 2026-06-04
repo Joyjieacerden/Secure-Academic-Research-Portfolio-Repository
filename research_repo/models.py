@@ -14,7 +14,8 @@ class User(AbstractUser):
     verified_by = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL, related_name='verified_users')
     description = models.TextField(blank=True, null=True, verbose_name="User Description")
     id_document = CloudinaryField('image', blank=True, null=True)
-
+    is_email_verified = models.BooleanField(default=False)
+    email_verification_token = models.CharField(max_length=100, blank=True, null=True)
 
     def __str__(self):
         return self.username
