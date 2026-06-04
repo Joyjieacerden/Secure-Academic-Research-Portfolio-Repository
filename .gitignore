@@ -15,3 +15,15 @@ __pycache__/
 .env
 
 staticfiles/
+
+
+# Security audit logs (contain sensitive event data)
+logs/
+
+# SAST / dependency scan reports (may contain vulnerability details)
+security/reports/*.json
+security/reports/*.txt
+
+# Keep the reports directory itself
+!security/reports/.gitkeep
+!security/reports/COMPLIANCE_REPORT.md
