@@ -7,7 +7,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticate
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-
+from rest_framework.throttling import UserRateThrottle
 from .serializers import LoginSerializer, LogoutSerializer, PublicationSerializer
 
 
@@ -48,7 +48,8 @@ class LogoutView(APIView):
 
 class PublicationViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly]
-
+    page_size = 10
+    throttle_classes = [UserRateThrottle]
     def _get_secure_queryset(self, user):
         """
         Helper method to securely isolate visible publications using Q objects.
