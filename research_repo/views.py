@@ -5,12 +5,19 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin,PermissionRequiredMixin
 from django.contrib.auth.views import LoginView, LogoutView
 from django.urls import reverse_lazy, reverse
+from django.utils.decorators import method_decorator
+from honeypot.decorators import check_honeypot
+from django_ratelimit.decorators import ratelimit
 from django.core.mail import send_mail
 from django.utils.crypto import get_random_string
 from django.conf import settings
 from .models import Publication, User, AccessGrant
 from django.db.models import Q
 from .forms import PublicationForm, AuthorshipFormSet, SignUpForm, LoginForm, UploadDocumentForm,AccessGrantForm
+
+
+@method_decorator(check_honeypot, name='dispatch')
+@method_decorator(ratelimit(key='ip', rate='10/m', method='POST', block=True), name='dispatch')
 
 class LoginView(LoginView):
     template_name = 'research_repo/login.html'
@@ -22,7 +29,10 @@ class LoginView(LoginView):
 
 class LogoutView(LoginRequiredMixin, LogoutView):
     next_page = reverse_lazy('login')
-
+    
+    
+@method_decorator(check_honeypot, name='dispatch')
+@method_decorator(ratelimit(key='ip', rate='5/h', method='POST', block=True), name='dispatch')
 class SignUpView(CreateView):
     model = User
     form_class = SignUpForm

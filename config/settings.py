@@ -46,6 +46,15 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/login/'
 
+# ---------------------------------------------------------------------------
+# INSTITUTIONAL EMAIL RESTRICTION
+# Only accounts with this email domain are permitted to register.
+# Override via ALLOWED_EMAIL_DOMAIN env var for other deployments.
+# ---------------------------------------------------------------------------
+ALLOWED_EMAIL_DOMAIN = os.getenv('ALLOWED_EMAIL_DOMAIN', 'evsu.edu.ph')
+
+
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -121,6 +130,17 @@ DATABASES = {
     }
 }
 
+# ---------------------------------------------------------------------------
+# AUTHENTICATION
+# ---------------------------------------------------------------------------
+
+AUTH_USER_MODEL = 'research_repo.User'
+
+AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',  # Task 1 – axes must be first
+    'django.contrib.auth.backends.ModelBackend',
+]
+
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -140,6 +160,172 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# ---------------------------------------------------------------------------
+# TASK 1 — BRUTE-FORCE PROTECTION (django-axes)
+# ---------------------------------------------------------------------------
+
+AXES_ENABLED = True
+AXES_FAILURE_LIMIT = 5                    # lock after 5 consecutive failures
+AXES_COOLOFF_TIME = 1                     # unlock after 1 hour (timedelta or int hours)
+AXES_LOCK_OUT_AT_FAILURE = True
+AXES_LOCKOUT_CALLABLE = None              # use default HTTP 403 lockout response
+AXES_RESET_ON_SUCCESS = True             # reset counter on successful login
+AXES_LOCKOUT_PARAMETERS = [             # lock by combination of IP + username
+    ['ip_address', 'username'],
+]
+AXES_IPWARE_PROXY_COUNT = 0              # adjust if behind a reverse proxy
+AXES_VERBOSE = True
+AXES_LOCKOUT_TEMPLATE = None            # let middleware return 403
+AXES_NEVER_LOCKOUT_WHITELIST = False
+
+# ---------------------------------------------------------------------------
+# TASK 2 — HONEYPOT (django-honeypot)
+# ---------------------------------------------------------------------------
+
+HONEYPOT_FIELD_NAME = 'phone_number'     # hidden field name bots fill in
+HONEYPOT_VALUE = ''                      # expected value is empty
+
+# ---------------------------------------------------------------------------
+# TASK 3 — AUDIT LOGGING  (see security/audit_logger.py)
+# ---------------------------------------------------------------------------
+
+LOG_DIR = os.path.join(BASE_DIR, 'logs')
+os.makedirs(LOG_DIR, exist_ok=True)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+
+    'formatters': {
+        'json_audit': {
+            '()': 'security.formatters.JSONAuditFormatter',
+        },
+        'verbose': {
+            'format': '[{levelname}] {asctime} {name} {message}',
+            'style': '{',
+        },
+    },
+
+    'handlers': {
+        'audit_file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOG_DIR, 'audit.log'),
+            'maxBytes': 10 * 1024 * 1024,   # 10 MB
+            'backupCount': 10,
+            'formatter': 'json_audit',
+            'encoding': 'utf-8',
+        },
+        'security_file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOG_DIR, 'security.log'),
+            'maxBytes': 10 * 1024 * 1024,
+            'backupCount': 10,
+            'formatter': 'json_audit',
+            'encoding': 'utf-8',
+        },
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+
+    'loggers': {
+        'security.audit': {
+            'handlers': ['audit_file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'security.brute_force': {
+            'handlers': ['security_file', 'console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'security.honeypot': {
+            'handlers': ['security_file', 'console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'axes': {
+            'handlers': ['security_file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'django.security': {
+            'handlers': ['security_file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}
+
+# ---------------------------------------------------------------------------
+# TASK 6 — HTTP SECURITY HEADERS
+# ---------------------------------------------------------------------------
+
+# --- Strict-Transport-Security ---
+SECURE_HSTS_SECONDS = 31536000          # 1 year
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+
+# --- SSL redirect (enable in production) ---
+SECURE_SSL_REDIRECT = not DEBUG
+
+# --- Cookie security ---
+SESSION_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_AGE = 3600               # 1 hour session timeout
+
+CSRF_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = 'Lax'
+
+# --- Misc ---
+SECURE_CONTENT_TYPE_NOSNIFF = True      # X-Content-Type-Options: nosniff
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = 'DENY'               # X-Frame-Options
+
+# --- Referrer-Policy ---
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+
+# --- Content-Security-Policy (django-csp 4.0 format) ---
+# In dev (DEBUG=True): report-only mode. In prod: enforcing mode.
+_CSP_DIRECTIVES = {
+    'default-src': ("'self'",),
+    'script-src': ("'self'",),
+    'style-src': ("'self'", "'unsafe-inline'"),   # inline styles needed by Django admin
+    'img-src': ("'self'", "data:", "res.cloudinary.com", "*.cloudinary.com"),
+    'font-src': ("'self'",),
+    'connect-src': ("'self'",),
+    'frame-ancestors': ("'none'",),
+    'form-action': ("'self'",),
+    'base-uri': ("'none'",),
+    'object-src': ("'none'",),
+}
+
+if DEBUG:
+    CONTENT_SECURITY_POLICY_REPORT_ONLY = {'DIRECTIVES': _CSP_DIRECTIVES}
+else:
+    CONTENT_SECURITY_POLICY = {'DIRECTIVES': _CSP_DIRECTIVES}
+
+# --- Permissions-Policy (django-permissions-policy) ---
+PERMISSIONS_POLICY = {
+    'accelerometer': [],
+    'camera': [],
+    'geolocation': [],
+    'gyroscope': [],
+    'magnetometer': [],
+    'microphone': [],
+    'payment': [],
+    'usb': [],
+}
+
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
@@ -151,6 +337,8 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
+
+
 
 
 # Static files (CSS, JavaScript, Images)
