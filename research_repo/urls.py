@@ -4,7 +4,7 @@ from django.contrib.auth.views import LogoutView
 from .views import LoginView, PublicationListView, PublicationDetailView, LogoutView, SignUpView, PublicationCreateView, PublicationUpdateView, PublicationDeleteView, UploadDocumentView,AccessGrantCreateView
 
 urlpatterns = [
-    path('register/', views.UserRegisterView.as_view(), name='register'),
+    path('register/', views.SignUpView.as_view(), name='signup'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('login/', LoginView.as_view(), name='login'),
     path('publications/', PublicationListView.as_view(), name='publication_list'),
