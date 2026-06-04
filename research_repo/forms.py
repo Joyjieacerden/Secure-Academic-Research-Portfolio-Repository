@@ -1,16 +1,3 @@
-<<<<<<< HEAD
-from django.forms import ModelForm,inlineformset_factory
-from django.contrib.auth.forms import UserCreationForm
-from .models import User, Portfolio, Publication,ReviewerAssignment
-
-
-class UserRegisterForm(UserCreationForm):
-    class Meta:
-        model = User
-        fields = ['username', 'email', 'password1', 'password2']
-
-class LoginForm(ModelForm):
-=======
 from django.forms import ModelForm, ValidationError, Form
 from django.forms import inlineformset_factory
 from django.contrib.auth.forms import UserCreationForm,AuthenticationForm
@@ -20,35 +7,18 @@ import cloudinary.uploader
 
 
 class LoginForm(AuthenticationForm):
->>>>>>> 037deb571a63240cf4f3f7218db32e8b127bd1c6
     class Meta:
         model = User
         fields = ['username', 'password']
 
-<<<<<<< HEAD
-class PortfolioForm(ModelForm):
-    class Meta:
-        model = Portfolio
-        fields = ['user_description', 'id_document_url']
-=======
 class SignUpForm(UserCreationForm):
     class Meta:
         model = User
         fields = ['username', 'email', 'password1', 'password2']
->>>>>>> 037deb571a63240cf4f3f7218db32e8b127bd1c6
 
 class PublicationForm(ModelForm):
     class Meta:
         model = Publication
-<<<<<<< HEAD
-        fields = ['title', 'abstract', 'full_pdf_url']
-
-class ReviewerAssignmentForm(ModelForm):
-    class Meta:
-        model = ReviewerAssignment
-        fields = ['publication', 'reviewer', 'expires_at']
-
-=======
         fields = ['title', 'abstract', 'full_pdf_url', 'is_public', 'auto_approve_access']
 
 class AuthorshipForm(ModelForm):
@@ -77,4 +47,3 @@ class AccessGrantForm(ModelForm):
     class Meta:
         model = AccessGrant
         fields = ['viewer', 'access_granted', 'expires_at']
->>>>>>> 037deb571a63240cf4f3f7218db32e8b127bd1c6
