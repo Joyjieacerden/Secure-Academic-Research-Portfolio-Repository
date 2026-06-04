@@ -29,7 +29,7 @@ class SignUpView(CreateView):
 
 class DeleteAccountView(LoginRequiredMixin,DeleteView):
     model = User
-    template_name = 'accouont_removal.html'
+    template_name = 'account_removal.html'
     success_url = reverse_lazy('/')
 
     def get_object(self, queryset = None):
@@ -45,7 +45,7 @@ class PublicationListView(LoginRequiredMixin, ListView):
         user = self.request.user
         query = self.request.GET.get('q', '').strip()
 
-        # 🔐 Base RBAC filter
+        #  Base RBAC filter
         queryset = Publication.objects.filter(
             Q(is_public=True) |
             Q(grants__viewer=user,
@@ -55,7 +55,7 @@ class PublicationListView(LoginRequiredMixin, ListView):
             Q(authors__user=user)
         ).distinct()
 
-        # 🔍 Search layer
+        #  Search layer
         if query:
             queryset = queryset.filter(
                 Q(title__icontains=query) |
