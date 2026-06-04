@@ -54,7 +54,7 @@ class AccessGrant(models.Model):
         if not self.expires_at:
             self.expires_at = timezone.now() + timedelta(days=30)
         super().save(*args, **kwargs)
-
+        
     def renew_access(self):
         self.expires_at = timezone.now() + timedelta(days=30)
-        self.save()    
+        self.save()

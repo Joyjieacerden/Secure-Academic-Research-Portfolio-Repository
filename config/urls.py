@@ -21,7 +21,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('',include('research_repo.urls')),
     path('api/',include('publication_api.urls')), 
-    path('api/get_token',TokenObtainPairView.as_view(),name='token_obtain'),
-    path('api/refresh_token',TokenRefreshView.as_view(),name = 'token_refresh')
+    path('api/get_token/',TokenObtainPairView.as_view(),name='token_obtain'),
+    path('api/refresh_token/',TokenRefreshView.as_view(),name = 'token_refresh')
     
 ]
