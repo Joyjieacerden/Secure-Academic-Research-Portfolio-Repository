@@ -1,0 +1,433 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if publication %}Edit{% else %}Upload{% endif %} Publication - ScholarVault{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <h1>
+        <i class="bi bi-file-earmark-plus"></i> 
+        {% if publication %}
+            Edit Publication
+        {% else %}
+            Upload New Publication
+        {% endif %}
+    </h1>
+    <p>Share your research with the academic community</p>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-circle"></i> <strong>Error:</strong>
+            {% for error in form.non_field_errors %}
+                <p class="mb-0">{{ error }}</p>
+            {% endfor %}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+
+            <!-- Publication Details Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-file-text"></i> Publication Details
+                </div>
+                <div class="card-body">
+                    <!-- Title -->
+                    <div class="mb-4">
+                        <label for="{{ form.title.id_for_label }}" class="form-label">
+                            <i class="bi bi-bookmark"></i> Publication Title
+                            <span class="text-danger">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            class="form-control form-control-lg {% if form.title.errors %}is-invalid{% endif %}"
+                            id="{{ form.title.id_for_label }}"
+                            name="{{ form.title.html_name }}"
+                            value="{{ form.title.value|default:'' }}"
+                            placeholder="Enter a descriptive title for your publication"
+                            required
+                        >
+                        {% if form.title.errors %}
+                        <div class="invalid-feedback d-block">
+                            <i class="bi bi-exclamation-circle"></i> {{ form.title.errors.0 }}
+                        </div>
+                        {% endif %}
+                        <small class="form-text text-muted">Max 255 characters. Be clear and descriptive.</small>
+                    </div>
+
+                    <!-- Abstract -->
+                    <div class="mb-4">
+                        <label for="{{ form.abstract.id_for_label }}" class="form-label">
+                            <i class="bi bi-file-earmark-text"></i> Abstract
+                            <span class="text-danger">*</span>
+                        </label>
+                        <textarea 
+                            class="form-control {% if form.abstract.errors %}is-invalid{% endif %}"
+                            id="{{ form.abstract.id_for_label }}"
+                            name="{{ form.abstract.html_name }}"
+                            rows="6"
+                            placeholder="Provide a comprehensive abstract summarizing your research..."
+                            required
+                        >{{ form.abstract.value|default:'' }}</textarea>
+                        {% if form.abstract.errors %}
+                        <div class="invalid-feedback d-block">
+                            <i class="bi bi-exclamation-circle"></i> {{ form.abstract.errors.0 }}
+                        </div>
+                        {% endif %}
+                        <small class="form-text text-muted">Summarize your research (200-500 words recommended)</small>
+                    </div>
+
+                    <!-- PDF Upload -->
+                    <div class="mb-4">
+                        <label for="{{ form.full_pdf.id_for_label }}" class="form-label">
+                            <i class="bi bi-file-pdf"></i> Full Publication (PDF)
+                        </label>
+                        <div class="input-group">
+                            <input 
+                                type="file" 
+                                class="form-control {% if form.full_pdf.errors %}is-invalid{% endif %}"
+                                id="{{ form.full_pdf.id_for_label }}"
+                                name="{{ form.full_pdf.html_name }}"
+                                accept=".pdf"
+                            >
+                            <span class="input-group-text">
+                                <i class="bi bi-cloud-upload"></i>
+                            </span>
+                        </div>
+                        {% if form.full_pdf.errors %}
+                        <div class="invalid-feedback d-block">
+                            <i class="bi bi-exclamation-circle"></i> {{ form.full_pdf.errors.0 }}
+                        </div>
+                        {% endif %}
+                        <small class="form-text text-muted">
+                            Upload your publication as a PDF file. Max 50MB.
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Access Control Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-shield"></i> Visibility & Access Control
+                </div>
+                <div class="card-body">
+                    <!-- Public Toggle -->
+                    <div class="mb-4">
+                        <div class="form-check form-switch">
+                            <input 
+                                type="checkbox" 
+                                class="form-check-input" 
+                                id="{{ form.is_public.id_for_label }}"
+                                name="{{ form.is_public.html_name }}"
+                                {% if form.is_public.value %}checked{% endif %}
+                            >
+                            <label class="form-check-label" for="{{ form.is_public.id_for_label }}">
+                                <i class="bi bi-globe"></i> <strong>Make this publication public</strong>
+                            </label>
+                        </div>
+                        <small class="form-text text-muted d-block mt-2">
+                            Public publications are visible to all authenticated users and appear in search results.
+                        </small>
+                    </div>
+
+                    <!-- Auto-Approve Toggle -->
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input 
+                                type="checkbox" 
+                                class="form-check-input" 
+                                id="{{ form.auto_approve_access.id_for_label }}"
+                                name="{{ form.auto_approve_access.html_name }}"
+                                {% if form.auto_approve_access.value %}checked{% endif %}
+                            >
+                            <label class="form-check-label" for="{{ form.auto_approve_access.id_for_label }}">
+                                <i class="bi bi-check-circle"></i> <strong>Auto-approve access requests</strong>
+                            </label>
+                        </div>
+                        <small class="form-text text-muted d-block mt-2">
+                            Automatically grant access to verified faculty who request it.
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Co-Authors Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-people"></i> Co-Authors & Contributors
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-4">
+                        <i class="bi bi-info-circle"></i>
+                        Add co-authors who contributed to this publication and specify their roles.
+                    </div>
+
+                    {{ authorship_formset.management_form }}
+
+                    <div id="authorsContainer" class="mb-4">
+                        {% for form in authorship_formset %}
+                        <div class="author-row mb-3 p-3 formset-row" style="background: #f8f9fa; border-radius: 8px; border-left: 3px solid var(--evsu-maroon);">
+                            <div class="row g-3 align-items-end">
+                                <!-- Hidden fields for formset management -->
+                                <input type="hidden" name="authors-{{ forloop.counter0 }}-id" value="{{ form.instance.id|default:'' }}">
+                                
+                                <div class="col-md-6">
+                                    <label class="form-label mb-2">
+                                        <i class="bi bi-person"></i> Author
+                                    </label>
+                                    <select class="form-select author-select" name="authors-{{ forloop.counter0 }}-user">
+                                        <option value="">-- Select Author --</option>
+                                        {% for user in form.user.field.queryset %}
+                                        <option value="{{ user.id }}" {% if form.user.value == user.id %}selected{% endif %}>
+                                            {{ user.get_full_name|default:user.username }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    {% if form.user.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        <i class="bi bi-exclamation-circle"></i> {{ form.user.errors.0 }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label mb-2">
+                                        <i class="bi bi-briefcase"></i> Contribution Role
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        class="form-control contribution-role"
+                                        name="authors-{{ forloop.counter0 }}-contribution_role"
+                                        value="{{ form.contribution_role.value|default:'' }}"
+                                        placeholder="e.g., Lead Researcher, Co-Investigator"
+                                    >
+                                    {% if form.contribution_role.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        <i class="bi bi-exclamation-circle"></i> {{ form.contribution_role.errors.0 }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-1 d-flex justify-content-end">
+                                    <input type="hidden" name="authors-{{ forloop.counter0 }}-DELETE" class="delete-checkbox" value="">
+                                    <button type="button" class="btn btn-outline-danger btn-sm delete-author" title="Remove author">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="addAuthorBtn">
+                        <i class="bi bi-plus-circle"></i> Add Co-Author
+                    </button>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-grid gap-2 gap-md-3 d-md-flex mb-4">
+                <button type="submit" class="btn btn-primary btn-lg flex-md-grow-1">
+                    <i class="bi bi-check-circle"></i> 
+                    {% if publication %}Save Changes{% else %}Upload Publication{% endif %}
+                </button>
+                <a href="{% url 'publication_list' %}" class="btn btn-outline-secondary btn-lg flex-md-grow-1">
+                    <i class="bi bi-arrow-left"></i> Cancel
+                </a>
+            </div>
+        </form>
+
+        <!-- Guidelines -->
+        <div class="alert alert-info">
+            <h6><i class="bi bi-lightbulb"></i> Tips for Success</h6>
+            <ul class="small mb-0">
+                <li>Use clear, descriptive titles (5-15 words)</li>
+                <li>Write comprehensive abstracts (200-500 words)</li>
+                <li>Upload the final, approved version of your publication</li>
+                <li>Add all co-authors and their contributions</li>
+                <li>Choose appropriate visibility settings</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-control, .form-select {
+        border-color: #ddd;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: var(--evsu-maroon);
+        box-shadow: 0 0 0 0.2rem rgba(139, 0, 0, 0.25);
+    }
+    
+    .card {
+        border: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: rgba(139, 0, 0, 0.05);
+    }
+    
+    /* Author row styling */
+    .author-row .form-select,
+    .author-row .form-control {
+        font-size: 0.95rem;
+        padding: 0.6rem 0.75rem;
+    }
+    
+    .author-row .form-label {
+        font-weight: 600;
+        color: #333;
+        font-size: 0.9rem;
+    }
+    
+    .author-row .btn-outline-danger:hover {
+        background-color: #dc3545;
+        color: white;
+        transition: all 0.2s ease;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const addAuthorBtn = document.getElementById('addAuthorBtn');
+    const authorsContainer = document.getElementById('authorsContainer');
+    const totalFormsInput = document.querySelector('[name="authors-TOTAL_FORMS"]');
+    
+    // Helper function to get all author rows
+    function getAuthorRows() {
+        return document.querySelectorAll('.author-row');
+    }
+    
+    // Helper function to update the total forms count
+    function updateFormCount() {
+        const rows = getAuthorRows();
+        totalFormsInput.value = rows.length;
+    }
+    
+    // Helper function to rename form fields
+    function renameFormFields(row, index) {
+        const inputs = row.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            if (input.name && input.name.includes('authors-')) {
+                // Replace the index in the name
+                input.name = input.name.replace(/authors-\d+/, `authors-${index}`);
+            }
+        });
+    }
+    
+    // Delete author row
+    function deleteAuthorRow(e) {
+        e.preventDefault();
+        const row = e.target.closest('.author-row');
+        const deleteCheckbox = row.querySelector('input[name*="-DELETE"]');
+        
+        if (deleteCheckbox) {
+            // If it's a saved form, mark for deletion
+            deleteCheckbox.checked = !deleteCheckbox.checked;
+            row.style.opacity = deleteCheckbox.checked ? '0.5' : '1';
+        } else {
+            // If it's a new empty form, just remove it from DOM
+            row.remove();
+            updateFormCount();
+            // Re-index remaining forms
+            reindexFormFields();
+        }
+    }
+    
+    // Re-index all form fields after adding/removing rows
+    function reindexFormFields() {
+        const rows = getAuthorRows();
+        rows.forEach((row, index) => {
+            renameFormFields(row, index);
+        });
+        updateFormCount();
+    }
+    
+    // Add new author row
+    addAuthorBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        const rows = getAuthorRows();
+        const newIndex = rows.length;
+        
+        // Get the first row as template
+        const templateRow = rows[0];
+        if (!templateRow) return;
+        
+        // Clone the first row
+        const newRow = templateRow.cloneNode(true);
+        
+        // Clear values in cloned row
+        newRow.querySelectorAll('input, select, textarea').forEach(field => {
+            if (field.type === 'hidden' || field.name.includes('-DELETE')) {
+                if (field.name.includes('-DELETE')) field.checked = false;
+                if (field.name.includes('-id')) field.value = '';
+            } else if (field.tagName === 'SELECT') {
+                field.selectedIndex = 0;
+            } else if (field.type !== 'hidden') {
+                field.value = '';
+            }
+        });
+        
+        // Rename all fields to the new index
+        renameFormFields(newRow, newIndex);
+        
+        // Add delete button handler
+        const deleteBtn = newRow.querySelector('.delete-author');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', deleteAuthorRow);
+        }
+        
+        // Append to container
+        authorsContainer.appendChild(newRow);
+        
+        // Update form count
+        updateFormCount();
+        
+        // Apply form styling
+        applyFormStyling(newRow);
+    });
+    
+    // Attach delete handlers to existing rows
+    function attachDeleteHandlers() {
+        document.querySelectorAll('.delete-author').forEach(btn => {
+            btn.removeEventListener('click', deleteAuthorRow);
+            btn.addEventListener('click', deleteAuthorRow);
+        });
+    }
+    
+    // Apply Bootstrap styling to form fields
+    function applyFormStyling(row) {
+        const selects = row.querySelectorAll('select');
+        const textInputs = row.querySelectorAll('input[type="text"]');
+        
+        selects.forEach(select => {
+            select.classList.add('form-select');
+        });
+        
+        textInputs.forEach(input => {
+            input.classList.add('form-control');
+        });
+    }
+    
+    // Initialize
+    attachDeleteHandlers();
+    getAuthorRows().forEach(row => {
+        applyFormStyling(row);
+    });
+    updateFormCount();
+});
+</script>
+{% endblock %}

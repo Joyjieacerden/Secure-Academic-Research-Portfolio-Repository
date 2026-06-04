@@ -1,0 +1,316 @@
+{% extends 'base.html' %}
+
+{% block title %}Settings - ScholarVault{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero">
+    <h1>
+        <i class="bi bi-gear"></i> Account Settings
+    </h1>
+    <p>Manage your profile, preferences, and security settings</p>
+</div>
+
+<div class="row">
+    <!-- Settings Sidebar Navigation -->
+    <div class="col-lg-3 mb-4">
+        <div class="card sticky-lg-top" style="top: 100px;">
+            <div class="card-header">
+                <i class="bi bi-list"></i> Settings Menu
+            </div>
+            <div class="list-group list-group-flush">
+                <a href="#profile" class="list-group-item list-group-item-action active" data-bs-toggle="list">
+                    <i class="bi bi-person-circle"></i> Profile
+                </a>
+                <a href="#security" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                    <i class="bi bi-lock"></i> Security
+                </a>
+                <a href="#preferences" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                    <i class="bi bi-sliders"></i> Preferences
+                </a>
+                <a href="#publications" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                    <i class="bi bi-file-earmark"></i> Publications
+                </a>
+                <a href="#notifications" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                    <i class="bi bi-bell"></i> Notifications
+                </a>
+                <a href="#danger-zone" class="list-group-item list-group-item-action text-danger" data-bs-toggle="list">
+                    <i class="bi bi-exclamation-triangle"></i> Danger Zone
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Content -->
+    <div class="col-lg-9">
+        <!-- Profile Section -->
+        <div class="card mb-4" id="profile">
+            <div class="card-header">
+                <i class="bi bi-person-circle"></i> Profile Information
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Username</label>
+                            <input type="text" class="form-control" value="{{ user.username }}" readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Email</label>
+                            <input type="email" class="form-control" value="{{ user.email }}" readonly>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Status</label>
+                    <div class="alert alert-info mb-0">
+                        <i class="bi bi-info-circle"></i>
+                        {% if user.is_faculty %}
+                            <strong>Faculty Member</strong> - You have publication upload privileges
+                        {% else %}
+                            <strong>Standard User</strong> - You can browse publications only
+                        {% endif %}
+                        {% if user.is_identity_verified %}
+                            <br><span class="badge bg-success"><i class="bi bi-check-circle"></i> Identity Verified</span>
+                        {% else %}
+                            <br><span class="badge bg-warning"><i class="bi bi-clock"></i> Pending Verification</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <a href="#" class="btn btn-primary">
+                    <i class="bi bi-pencil"></i> Edit Profile
+                </a>
+            </div>
+        </div>
+
+        <!-- Security Section -->
+        <div class="card mb-4" id="security">
+            <div class="card-header">
+                <i class="bi bi-lock"></i> Security Settings
+            </div>
+            <div class="card-body">
+                <h6 class="mb-3">Password</h6>
+                <p class="text-muted small">
+                    Keep your password strong and unique to protect your account
+                </p>
+                <a href="#" class="btn btn-primary mb-4">
+                    <i class="bi bi-key"></i> Change Password
+                </a>
+
+                <hr>
+
+                <h6 class="mb-3">Two-Factor Authentication (2FA)</h6>
+                <p class="text-muted small">
+                    Add an extra layer of security to your account
+                </p>
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i> <strong>Not Enabled</strong>
+                </div>
+                <button class="btn btn-outline-primary" disabled>
+                    <i class="bi bi-shield-check"></i> Enable 2FA (Coming Soon)
+                </button>
+
+                <hr class="my-4">
+
+                <h6 class="mb-3">Active Sessions</h6>
+                <p class="text-muted small">
+                    Manage devices where you're currently logged in
+                </p>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Device</th>
+                                <th>Last Active</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <i class="bi bi-laptop"></i> Current Browser
+                                </td>
+                                <td>
+                                    <small class="text-muted">Just now</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">Active</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preferences Section -->
+        <div class="card mb-4" id="preferences">
+            <div class="card-header">
+                <i class="bi bi-sliders"></i> User Preferences
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="emailNotifications" checked>
+                        <label class="form-check-label" for="emailNotifications">
+                            Receive email notifications
+                        </label>
+                    </div>
+                    <small class="form-text d-block mt-2">
+                        Get notified about access requests and publication updates
+                    </small>
+                </div>
+
+                <div class="mb-4">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="discoveryNotifications">
+                        <label class="form-check-label" for="discoveryNotifications">
+                            Discovery notifications
+                        </label>
+                    </div>
+                    <small class="form-text d-block mt-2">
+                        Receive recommendations based on research interests
+                    </small>
+                </div>
+
+                <button class="btn btn-primary">
+                    <i class="bi bi-check-circle"></i> Save Preferences
+                </button>
+            </div>
+        </div>
+
+        <!-- Publications Section -->
+        <div class="card mb-4" id="publications">
+            <div class="card-header">
+                <i class="bi bi-file-earmark"></i> My Publications
+            </div>
+            <div class="card-body">
+                <p class="text-muted">
+                    You have uploaded <strong>0</strong> publications
+                </p>
+                <a href="{% url 'publication_list' %}" class="btn btn-primary">
+                    <i class="bi bi-journals"></i> View All
+                </a>
+                <a href="{% url 'publication_create' %}" class="btn btn-outline-primary">
+                    <i class="bi bi-plus-circle"></i> Upload New
+                </a>
+            </div>
+        </div>
+
+        <!-- Notifications Section -->
+        <div class="card mb-4" id="notifications">
+            <div class="card-header">
+                <i class="bi bi-bell"></i> Notification Center
+            </div>
+            <div class="card-body">
+                <div class="alert alert-light">
+                    <p class="text-muted mb-0">
+                        <i class="bi bi-info-circle"></i>
+                        You currently have no notifications
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Danger Zone -->
+        <div class="card border-danger mb-4" id="danger-zone">
+            <div class="card-header bg-danger">
+                <i class="bi bi-exclamation-triangle"></i> Danger Zone
+            </div>
+            <div class="card-body">
+                <h6 class="text-danger mb-3">Irreversible Actions</h6>
+
+                <div class="mb-4">
+                    <h6>Delete Account</h6>
+                    <p class="text-muted small">
+                        Permanently delete your account and all associated data. This action cannot be undone.
+                    </p>
+                    <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
+                        <i class="bi bi-trash"></i> Delete Account
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Account Confirmation Modal -->
+<div class="modal fade" id="deleteAccountModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-danger">
+            <div class="modal-header bg-danger">
+                <h5 class="modal-title">Delete Account</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-circle"></i>
+                    <strong>Warning:</strong> This will permanently delete your account and all data.
+                </div>
+                <p>
+                    Type your username to confirm:
+                </p>
+                <input type="text" class="form-control" placeholder="Enter your username" id="confirmUsername">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" action="{% url 'account_removal' %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Delete Account Permanently
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .sticky-lg-top {
+        position: sticky;
+    }
+    
+    @media (max-width: 992px) {
+        .sticky-lg-top {
+            position: static;
+        }
+    }
+    
+    .list-group-item {
+        cursor: pointer;
+    }
+    
+    .list-group-item.active {
+        background-color: var(--evsu-maroon);
+        border-color: var(--evsu-maroon);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Confirm username before deletion
+    const confirmBtn = document.querySelector('[data-bs-target="#deleteAccountModal"]');
+    const form = document.querySelector('#deleteAccountModal form');
+    
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const input = document.getElementById('confirmUsername');
+            const username = '{{ user.username }}';
+            
+            if (input.value !== username) {
+                e.preventDefault();
+                alert('Username does not match. Please try again.');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

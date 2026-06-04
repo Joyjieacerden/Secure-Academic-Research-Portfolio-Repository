@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block title %}Settings - ScholarVault{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center my-5">
+    <div class="col-lg-8">
+        <!-- Settings Header -->
+        <div class="mb-4">
+            <h1 class="text-maroon mb-2">
+                <i class="bi bi-gear"></i> Account Settings
+            </h1>
+            <p class="text-muted">Manage your profile and preferences</p>
+        </div>
+
+        <!-- Settings Tabs -->
+        <ul class="nav nav-tabs mb-4" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab">
+                    <i class="bi bi-person-circle"></i> Profile
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <!-- Profile Tab -->
+            <div class="tab-pane fade show active" id="profile" role="tabpanel">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="bi bi-person"></i> Personal Information
+                    </div>
+                    <div class="card-body">
+                        <form id="profileForm" method="POST" action="{% url 'settings' %}">
+                            {% csrf_token %}
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">First Name</label>
+                                    <input type="text" class="form-control" name="first_name" id="first_name" value="{{ user.first_name }}" placeholder="Enter first name">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Last Name</label>
+                                    <input type="text" class="form-control" name="last_name" id="last_name" value="{{ user.last_name }}" placeholder="Enter last name">
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label">Email Address</label>
+                                <input type="email" class="form-control" name="email" id="email" value="{{ user.email }}" disabled>
+                                <small class="form-text">Primary email - cannot be changed</small>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label">Username</label>
+                                <input type="text" class="form-control" name="username" id="username" value="{{ user.username }}" disabled>
+                                <small class="form-text">Username - cannot be changed</small>
+                            </div>
+                            <button type="submit" class="btn btn-primary" name="profile_save">
+                                <i class="bi bi-check"></i> Save Profile
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-shield-check"></i> Faculty Verification
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info mb-4">
+                            <i class="bi bi-info-circle"></i>
+                            <strong>Upload your ID</strong> to get verified as faculty and unlock publication upload features.
+                        </div>
+
+                        <form id="verificationForm" method="POST" enctype="multipart/form-data" action="{% url 'settings' %}">
+                            {% csrf_token %}
+                            <div class="mb-4">
+                                <label class="form-label">Upload ID Document</label>
+                                <div class="mb-3">
+                                    {% if user.id_document %}
+                                    <div class="alert alert-success mb-3">
+                                        <i class="bi bi-check-circle"></i> ID document uploaded
+                                    </div>
+                                    {% endif %}
+                                    <input type="file" class="form-control" name="id_document" id="id_document" accept="image/*,.pdf" placeholder="Choose file">
+                                </div>
+                                <small class="form-text text-muted">
+                                    Accepted formats: JPG, PNG, PDF (Max 5MB)
+                                </small>
+                            </div>
+
+                            <!-- Verification Status -->
+                            <div class="mb-4">
+                                <label class="form-label">Verification Status</label>
+                                <div class="d-flex align-items-center p-3" style="background: #f8f9fa; border-radius: 8px;">
+                                    {% if user.is_identity_verified %}
+                                    <span class="badge bg-success me-2">
+                                        <i class="bi bi-check-circle"></i> Verified
+                                    </span>
+                                    <span class="text-success">You are verified as faculty</span>
+                                    {% else %}
+                                    <span class="badge bg-warning me-2">
+                                        <i class="bi bi-clock"></i> Pending
+                                    </span>
+                                    <span class="text-warning">Awaiting verification</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary" name="verify_submit">
+                                <i class="bi bi-upload"></i> Submit for Verification
+                            </button>
+                        </form>
+                    </div>
+                </div>
+        </div>
+
+        {% endblock %}
+
+{% block extra_css %}
+<style>
+    .nav-tabs .nav-link {
+        color: var(--evsu-maroon) !important;
+        border-color: #e0e0e0 !important;
+        background-color: #f8f9fa !important;
+    }
+    
+    .nav-tabs .nav-link:hover {
+        border-color: var(--evsu-maroon) !important;
+        color: var(--evsu-maroon) !important;
+        background-color: #fff !important;
+    }
+    
+    .nav-tabs .nav-link.active {
+        background-color: white !important;
+        border-color: var(--evsu-maroon) var(--evsu-maroon) white !important;
+        color: var(--evsu-maroon) !important;
+        font-weight: 600 !important;
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, var(--evsu-maroon) 0%, var(--evsu-maroon-light) 100%);
+        color: white;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,28 @@
+<!-- Reusable Publication Card Component -->
+<div class="card mb-3 publication-card border-left-4">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+            <h5 class="card-title flex-grow-1">
+                <a href="{% url 'publication_detail' publication.id %}" class="text-dark text-decoration-none">
+                    {{ publication.title }}
+                </a>
+            </h5>
+            {% if publication.is_public %}
+            <span class="badge bg-success"><i class="bi bi-globe"></i></span>
+            {% else %}
+            <span class="badge bg-warning"><i class="bi bi-lock"></i></span>
+            {% endif %}
+        </div>
+        
+        <p class="card-text text-muted small text-truncate-2">{{ publication.abstract }}</p>
+        
+        <div class="d-flex justify-content-between align-items-center">
+            <small class="text-muted">
+                <i class="bi bi-person"></i> {{ publication.uploader.username }}
+            </small>
+            <a href="{% url 'publication_detail' publication.id %}" class="btn btn-sm btn-primary">
+                View <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+</div>

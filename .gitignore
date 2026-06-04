@@ -3,6 +3,9 @@
 venv/
 ENV/
 
+.env/
+
+
 # Django database
 *.sqlite3
 
