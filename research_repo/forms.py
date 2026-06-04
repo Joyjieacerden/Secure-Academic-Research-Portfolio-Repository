@@ -1,7 +1,8 @@
 from django.forms import ModelForm, ValidationError, Form
 from django.forms import inlineformset_factory
-from django.contrib.auth.forms import UserCreationForm,AuthenticationForm
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from .models import Publication, User, AccessGrant, Authorship
+from .validators import validate_institutional_email
 import cloudinary.uploader
 
 
@@ -11,10 +12,21 @@ class LoginForm(AuthenticationForm):
         model = User
         fields = ['username', 'password']
 
+
 class SignUpForm(UserCreationForm):
     class Meta:
         model = User
         fields = ['username', 'email', 'password1', 'password2']
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email', '').strip()
+        if not email:
+            raise ValidationError('Email address is required.')
+        validate_institutional_email(email)
+        # Uniqueness check — prevents duplicate accounts
+        if User.objects.filter(email__iexact=email).exists():
+            raise ValidationError('An account with this email address already exists.')
+        return email.lower()
 
 class PublicationForm(ModelForm):
     class Meta:

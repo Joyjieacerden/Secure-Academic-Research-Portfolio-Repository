@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Sign Up</title>
+</head>
+
+<body>
+    <form method="post">{% csrf_token %}
+        {{ form.as_p }}
+        <input type="hidden" name="phone_number" value="">
+        <button type="submit">Register</button>
+    </form>
+</body>
+
+</html>

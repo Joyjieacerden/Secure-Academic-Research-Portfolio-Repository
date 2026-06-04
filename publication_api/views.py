@@ -1,6 +1,7 @@
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from research_repo.models import Publication
 from rest_framework import status, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
@@ -8,14 +9,16 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.throttling import UserRateThrottle
-from .serializers import LoginSerializer, LogoutSerializer, PublicationSerializer
+from django_ratelimit.decorators import ratelimit
+from .serializers import LoginSerializer, LogoutSerializer, PublicationSerializer, UserRegistrationSerializer
 
 
+@method_decorator(ratelimit(key='ip', rate='10/m', method='POST', block=True), name='dispatch')
 class LoginView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request, format=None):
-        serializer = LoginSerializer(data=request.data)
+        serializer = LoginSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
         refresh = RefreshToken.for_user(user)
@@ -33,9 +36,9 @@ class LoginView(APIView):
         }, status=status.HTTP_200_OK)
     
 
+@method_decorator(ratelimit(key='ip', rate='20/m', method='POST', block=True), name='dispatch')
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
-
     def post(self, request, format=None):
         serializer = LogoutSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -43,6 +46,28 @@ class LogoutView(APIView):
         return Response(
             {"message": "Successfully logged out."}, 
             status=status.HTTP_205_RESET_CONTENT
+        )
+
+
+@method_decorator(ratelimit(key='ip', rate='5/h', method='POST', block=True), name='dispatch')
+class RegisterView(APIView):
+    """
+    API registration endpoint.
+    Only accepts @evsu.edu.ph (or configured ALLOWED_EMAIL_DOMAIN) addresses.
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request, format=None):
+        serializer = UserRegistrationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        return Response(
+            {
+                'message': 'Account created successfully. Please log in.',
+                'username': user.username,
+                'email': user.email,
+            },
+            status=status.HTTP_201_CREATED
         )
 
 

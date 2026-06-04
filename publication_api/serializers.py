@@ -3,6 +3,7 @@ from django.utils import timezone
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from research_repo.models import User, Publication, Authorship
+from research_repo.validators import validate_institutional_email
 
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField(write_only=True)
@@ -16,7 +17,10 @@ class LoginSerializer(serializers.Serializer):
         password = attrs.get('password')
 
         if username and password:
-            user = authenticate(username=username, password=password)
+            # Axes requires a Django HttpRequest, not a DRF Request wrapper
+            drf_request = self.context.get('request')
+            django_request = getattr(drf_request, '_request', drf_request)
+            user = authenticate(request=django_request, username=username, password=password)
 
             if not user:
                 raise serializers.ValidationError(
@@ -50,6 +54,48 @@ class LogoutSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 {"refresh": "Token is invalid or already expired."}
             )
+
+
+class UserRegistrationSerializer(serializers.ModelSerializer):
+    """
+    API endpoint for new user registration.
+    Enforces the institutional email domain restriction at the serializer level.
+    """
+    password = serializers.CharField(write_only=True, min_length=8,
+                                     style={'input_type': 'password'})
+    password2 = serializers.CharField(write_only=True,
+                                      style={'input_type': 'password'},
+                                      label='Confirm password')
+
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'password', 'password2']
+
+    def validate_email(self, value):
+        """Reject any email not from the institutional domain."""
+        email = value.strip().lower()
+        try:
+            validate_institutional_email(email)
+        except Exception as exc:
+            raise serializers.ValidationError(str(exc))
+        if User.objects.filter(email__iexact=email).exists():
+            raise serializers.ValidationError(
+                'An account with this email address already exists.'
+            )
+        return email
+
+    def validate(self, attrs):
+        if attrs['password'] != attrs['password2']:
+            raise serializers.ValidationError({'password2': 'Passwords do not match.'})
+        return attrs
+
+    def create(self, validated_data):
+        validated_data.pop('password2')
+        password = validated_data.pop('password')
+        user = User(**validated_data)
+        user.set_password(password)
+        user.save()
+        return user
 
 
 class UserSerializer(serializers.ModelSerializer):
