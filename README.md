@@ -51,14 +51,15 @@ Secure Academic Research and Portfolio Repository/
 │   ├── urls.py              # Main System Routing Table
 │   └── wsgi.py              # Gunicorn Staging Entrypoint
 │
+
 ├── repository/              # Core Repository Application Module
 │   ├── mixins.py            # Object-Level Permission Control Layers
 │   ├── models.py            # Database Models (ResearchPaper, CoAuthor)
 │   ├── serializers.py       # DRF Token-Masked Serializers
 │   └── views.py             # Formset Controllers & Core Logic
+
 │
 ├── .env                     # Private Secrets (Blocked from Version Control)
-├── .env.example             # Shared Configuration Layout Template
 ├── .gitignore               # Strict Exclusion Pattern Rules
 ├── build.sh                 # Production Linux Deployment Automation Script
 ├── db.sqlite3               # Local Sandbox Database System
