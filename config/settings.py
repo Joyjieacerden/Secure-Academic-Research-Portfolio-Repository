@@ -58,6 +58,8 @@ INSTALLED_APPS = [
     'research_repo',
     'cloudinary_storage', 
     'cloudinary',
+    'publication_api',
+    'rest_framework', 
 ]
 
 print(f"DEBUG: Cloud Name is {os.getenv('CLOUDINARY_CLOUD_NAME')}")
@@ -89,6 +91,17 @@ TEMPLATES = [
         },
     },
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/day',
+        'user': '1000/day'
+    }
+}
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
