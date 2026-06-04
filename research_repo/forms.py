@@ -33,6 +33,7 @@ class PublicationForm(ModelForm):
                 'class': 'form-control' # Optional: Add your CSS/Bootstrap styling class here
             }),
         }
+        
 # end
 
 class AuthorshipForm(ModelForm):
