@@ -34,7 +34,11 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'fallback-insecure-key-for-local-onl
 DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
 
 # Dynamic allowed hosts handling for seamless deployment infrastructure
-ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+ALLOWED_HOSTS = [
+    host.strip() 
+    for host in os.getenv('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+    if host.strip()
+]
 
 AUTH_USER_MODEL = 'research_repo.User'
 LOGIN_URL = '/login/'
