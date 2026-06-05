@@ -40,6 +40,10 @@ ALLOWED_HOSTS = [
     if host.strip()
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://secure-academic-research-portfolio.onrender.com',
+]
+
 AUTH_USER_MODEL = 'research_repo.User'
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
