@@ -8,7 +8,7 @@ An enterprise-grade, secure digital portfolio generator and research repository 
 
 Every team member is graded individually during the face-to-face defense based on their mastery of their assigned enterprise domain:
 
-* **Joyce (Lead Cloud & DevOps Engineer):** Orchestrates infrastructure deployment automation, cloud-native media structures via Cloudinary, zero-trust credential abstraction (`python-dotenv`), and compilation configurations.
+* **Joyce Acerden (Lead Cloud & DevOps Engineer):** Orchestrates infrastructure deployment automation, cloud-native media structures via Cloudinary, zero-trust credential abstraction (`python-dotenv`), and compilation configurations.
 * **Mark Steven Camposano (API & IAM Engineer):** Constructs the Django REST Framework (DRF) endpoints, handles JSON Web Token (JWT) identity lifetimes, and engineers conditional field-level data masking.
 * **Ann Trecia C. Balendo (Database Architect & RBAC Lead):** Directs schema modeling relationships, handles bulk database execution pipelines, and implements anti-IDOR (Insecure Direct Object Reference) access control logic.
 * **Rochelle M. Florendo (Frontend UI & Component Engineer):** Builds responsive dashboard layouts, designs interactive search filtering grids, handles dynamic inline co-author formsets, and codes custom template tags.
@@ -44,24 +44,31 @@ Every team member is graded individually during the face-to-face defense based o
 
 ```text
 Secure Academic Research and Portfolio Repository/
-│
-├── config/                  # Core Project Configuration Folder
+├── .venv/                     # Python Virtual Environment
+├── config/                    # Core Project Configuration Folder
 │   ├── __init__.py
-│   ├── settings.py          # Decoupled Security Configuration
-│   ├── urls.py              # Main System Routing Table
-│   └── wsgi.py              # Gunicorn Staging Entrypoint
-│
-
-├── repository/              # Core Repository Application Module
-│   ├── mixins.py            # Object-Level Permission Control Layers
-│   ├── models.py            # Database Models (ResearchPaper, CoAuthor)
-│   ├── serializers.py       # DRF Token-Masked Serializers
-│   └── views.py             # Formset Controllers & Core Logic
-
-│
-├── .env                     # Private Secrets (Blocked from Version Control)
-├── .gitignore               # Strict Exclusion Pattern Rules
-├── build.sh                 # Production Linux Deployment Automation Script
-├── db.sqlite3               # Local Sandbox Database System
-├── manage.py                # Django CLI Orchestration Engine
-└── requirements.txt         # Production Dependency Packages Manifest
+│   ├── settings.py            # Decoupled Security Configuration
+│   ├── urls.py                # Main System Routing Table
+│   └── wsgi.py                # Gunicorn Staging Entrypoint
+├── deliverables/              # Project Deliverables & Documentation
+├── logs/                      # System Audit Trail & Event Logs
+├── publication_api/           # DRF App (Token-Masked APIs)
+│   ├── models.py              # Publication Database Schema
+│   ├── serializers.py         # JWT Token-Masked Serializers
+│   └── views.py               # Masked Endpoint Controllers
+├── research_repo/             # Monolithic Web App Module
+│   ├── models.py              # Primary Research Data Models
+│   ├── views.py               # Inline Formset Controllers
+│   └── templates/             # App-Specific Frontend Layouts
+├── security/                  # DevSecOps (Active Defense & Axes)
+├── static/                    # Root Global Static Asset Directory
+├── staticfiles/               # Collected Static Assets (Production)
+├── templates/                 # Shared Global UI & Dashboard Components
+├── .env                       # Private Secrets (Git Blocked)
+├── .gitignore                 # Strict Exclusion Rule Matrix
+├── build.sh                   # Production Linux Automation Script
+├── db.sqlite3                 # Local Sandbox SQLite Database
+├── IMPLEMENTATION_MATRIX.md   # Project Implementation Docs
+├── manage.py                  # Django CLI Orchestration Engine
+├── README.md                  # System Documentation Entrypoint
+└── requirements.txt           # Production Dependencies Manifest
