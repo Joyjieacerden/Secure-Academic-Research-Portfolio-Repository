@@ -3,6 +3,9 @@
 An enterprise-grade, secure digital portfolio generator and research repository built with the Django Framework. This platform empowers university faculty to publish and manage their academic publications, credentials, and datasets, while leveraging advanced cryptographic controls, JSON Web Tokens (JWT), and active defensive countermeasures to protect sensitive raw research assets from public exposure.
 
 ---
+### 🔗 Project Links
+[![GitHub Repository]
+[![Live on Render] https://secure-academic-research-portfolio.onrender.com
 
 ## 👥 Professional Team Roles & Accountability Ledger
 
