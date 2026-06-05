@@ -61,58 +61,47 @@
                 </div>
 
                 <div class="card">
-                    <div class="card-header">
-                        <i class="bi bi-shield-check"></i> Faculty Verification
+                <div class="card-header">
+                    <i class="bi bi-shield-check"></i> Faculty Verification
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-4">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Upload your ID</strong> to get verified as faculty and unlock publication upload features.
                     </div>
-                    <div class="card-body">
-                        <div class="alert alert-info mb-4">
-                            <i class="bi bi-info-circle"></i>
-                            <strong>Upload your ID</strong> to get verified as faculty and unlock publication upload features.
+
+                    <form id="verificationForm" method="POST" enctype="multipart/form-data" action="{% url 'settings' %}">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label class="form-label">Verification Status</label>
+                            <div class="d-flex align-items-center p-3" style="background: #f8f9fa; border-radius: 8px;">
+                                {% if user.is_identity_verified %}
+                                    <span class="badge bg-success me-2"><i class="bi bi-check-circle"></i> Verified</span>
+                                    <span class="text-success">You are fully verified as faculty.</span>
+                                {% elif user.id_document %}
+                                    <span class="badge bg-info me-2"><i class="bi bi-hourglass-split"></i> Awaiting Review</span>
+                                    <span class="text-info">ID submitted. Waiting for admin approval.</span>
+                                {% else %}
+                                    <span class="badge bg-warning me-2"><i class="bi bi-clock"></i> Pending</span>
+                                    <span class="text-warning">Please upload your ID to request verification.</span>
+                                {% endif %}
+                            </div>
                         </div>
 
-                        <form id="verificationForm" method="POST" enctype="multipart/form-data" action="{% url 'settings' %}">
-                            {% csrf_token %}
-                            <div class="mb-4">
-                                <label class="form-label">Verification Status</label>
-                                <div class="d-flex align-items-center p-3" style="background: #f8f9fa; border-radius: 8px;">
-                                    {% if user.is_identity_verified %}
-                                        <span class="badge bg-success me-2"><i class="bi bi-check-circle"></i> Verified</span>
-                                        <span class="text-success">You are fully verified as faculty.</span>
-                                    {% elif user.id_document %}
-                                        <span class="badge bg-info me-2"><i class="bi bi-hourglass-split"></i> Awaiting Review</span>
-                                        <span class="text-info">ID submitted. Waiting for admin approval.</span>
-                                    {% else %}
-                                        <span class="badge bg-warning me-2"><i class="bi bi-clock"></i> Pending</span>
-                                        <span class="text-warning">Please upload your ID to request verification.</span>
-                                    {% endif %}
-                                </div>
-                            </div>
-
-                            <!-- Verification Status -->
-                            <div class="mb-4">
-                                <label class="form-label">Verification Status</label>
-                                <div class="d-flex align-items-center p-3" style="background: #f8f9fa; border-radius: 8px;">
-                                    {% if user.is_identity_verified %}
-                                    <span class="badge bg-success me-2">
-                                        <i class="bi bi-check-circle"></i> Verified
-                                    </span>
-                                    <span class="text-success">You are verified as faculty</span>
-                                    {% else %}
-                                    <span class="badge bg-warning me-2">
-                                        <i class="bi bi-clock"></i> Pending
-                                    </span>
-                                    <span class="text-warning">Awaiting verification</span>
-                                    {% endif %}
-                                </div>
-                            </div>
-
-                            <button type="submit" class="btn btn-primary" name="verify_submit">
-                                <i class="bi bi-upload"></i> Submit for Verification
-                            </button>
-                        </form>
-                    </div>
+                        {% if not user.is_identity_verified and not user.id_document %}
+                        <div class="mb-4">
+                            <label class="form-label" for="id_document">Upload Faculty ID</label>
+                            <input type="file" class="form-control" name="id_document" id="id_document" required>
+                            <small class="text-muted">Accepted formats: JPG, PNG, PDF</small>
+                        </div>
+                        <button type="submit" class="btn btn-primary" name="verify_submit">
+                            <i class="bi bi-upload"></i> Submit for Verification
+                        </button>
+                        {% endif %}
+                    </form>
                 </div>
-        </div>
+            </div>
 
         {% endblock %}
 
