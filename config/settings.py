@@ -44,6 +44,8 @@ CSRF_TRUSTED_ORIGINS = [
     'https://secure-academic-research-portfolio.onrender.com',
 ]
 
+USE_X_FORWARDED_HOST = True
+
 AUTH_USER_MODEL = 'research_repo.User'
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
@@ -169,16 +171,17 @@ AUTH_PASSWORD_VALIDATORS = [
 # ---------------------------------------------------------------------------
 
 AXES_ENABLED = True
-AXES_FAILURE_LIMIT = 5                    # lock after 5 consecutive failures
-AXES_COOLOFF_TIME = 1                     # unlock after 1 hour (timedelta or int hours)
+AXES_FAILURE_LIMIT = 5                    
+AXES_COOLOFF_TIME = 1                     
 AXES_LOCK_OUT_AT_FAILURE = True
-AXES_LOCKOUT_CALLABLE = None              # use default HTTP 403 lockout response
-AXES_RESET_ON_SUCCESS = True             # reset counter on successful login
-AXES_LOCKOUT_PARAMETERS = [             # lock by combination of IP + username
+AXES_RESET_ON_SUCCESS = True             
+AXES_LOCKOUT_PARAMETERS = [             
     ['ip_address', 'username'],
 ]
-AXES_IPWARE_PROXY_COUNT = 0              # adjust if behind a reverse proxy
+# CHANGE THIS FROM 0 TO 1:
+AXES_IPWARE_PROXY_COUNT = 1              
 AXES_VERBOSE = True
+
 AXES_LOCKOUT_TEMPLATE = None            # let middleware return 403
 AXES_NEVER_LOCKOUT_WHITELIST = False
 
