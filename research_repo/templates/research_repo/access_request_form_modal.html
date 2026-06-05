@@ -1,0 +1,223 @@
+<!-- Access Request Modal - Include this in publication_detail.html -->
+<div id="accessRequestModal" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+    <div style="background-color: white; margin: 5% auto; padding: 0; border-radius: 12px; width: 90%; max-width: 500px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); animation: slideIn 0.3s ease;">
+        
+        <!-- Modal Header -->
+        <div style="background: linear-gradient(135deg, var(--evsu-maroon) 0%, var(--evsu-maroon-dark) 100%); color: white; padding: 1.5rem; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h5 style="margin: 0; font-size: 1.3rem; font-weight: 700;">
+                    <i class="bi bi-hand-thumbs-up"></i> Request Access to Research
+                </h5>
+                <p style="margin: 0.25rem 0 0 0; font-size: 0.9rem; opacity: 0.9;">Complete the form below to request access</p>
+            </div>
+            <button onclick="closeAccessRequestModal()" style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; padding: 0;">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+
+        <!-- Modal Body -->
+        <form id="accessRequestForm" onsubmit="submitAccessRequest(event)">
+            <div style="padding: 2rem;">
+                
+                <!-- Publication Info (Read-only) -->
+                <div style="background: rgba(139, 0, 0, 0.08); border-left: 4px solid var(--evsu-maroon); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                    <p style="margin: 0; font-size: 0.85rem; color: #666; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Publication</p>
+                    <h6 style="margin: 0.5rem 0 0 0; color: var(--evsu-maroon); font-weight: 700;">
+                        <span id="modal-pub-title">Loading...</span>
+                    </h6>
+                </div>
+
+                <!-- Duration Field -->
+                <div style="margin-bottom: 1.5rem;">
+                    <label for="requestDuration" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333;">
+                        <i class="bi bi-hourglass-split"></i> How long do you need access?
+                        <span style="color: #dc3545;">*</span>
+                    </label>
+                    <select id="requestDuration" name="duration" required style="width: 100%; padding: 0.75rem; border: 2px solid #e8eef2; border-radius: 8px; font-size: 1rem; color: #333; transition: all 0.3s ease;">
+                        <option value="">-- Select Duration --</option>
+                        <option value="7">7 days</option>
+                        <option value="30" selected>30 days</option>
+                        <option value="90">90 days</option>
+                        <option value="365">1 year</option>
+                        <option value="custom">Custom duration</option>
+                    </select>
+                    
+                    <!-- Custom Duration Input (hidden by default) -->
+                    <div id="customDurationDiv" style="display: none; margin-top: 0.75rem;">
+                        <input type="number" id="customDays" min="1" max="365" placeholder="Enter number of days (1-365)" style="width: 100%; padding: 0.75rem; border: 2px solid #e8eef2; border-radius: 8px; font-size: 1rem;">
+                    </div>
+                </div>
+
+                <!-- Request Purpose / Message -->
+                <div style="margin-bottom: 1.5rem;">
+                    <label for="requestMessage" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333;">
+                        <i class="bi bi-chat-dots"></i> Why do you need access?
+                    </label>
+                    <textarea id="requestMessage" name="message" placeholder="e.g., 'For my research on machine learning' or 'Literature review for my thesis'" 
+                              style="width: 100%; padding: 0.75rem; border: 2px solid #e8eef2; border-radius: 8px; font-size: 1rem; font-family: inherit; resize: vertical; min-height: 100px; color: #333;" 
+                              maxlength="500"></textarea>
+                    <small style="color: #999; display: block; margin-top: 0.5rem;">
+                        <span id="charCount">0</span>/500 characters (optional)
+                    </small>
+                </div>
+
+                <!-- Info Box -->
+                <div style="background: #f0f7ff; border-left: 4px solid #29b6f6; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                    <p style="margin: 0; font-size: 0.9rem; color: #0277bd;">
+                        <i class="bi bi-info-circle"></i> 
+                        <strong>How it works:</strong> The author will review your request and approve or decline it. Once approved, you'll have access to the full publication for the requested duration.
+                    </p>
+                </div>
+
+            </div>
+
+            <!-- Modal Footer -->
+            <div style="padding: 1.5rem 2rem; background: #f8f9fa; border-top: 1px solid #e8eef2; border-radius: 0 0 12px 12px; display: flex; gap: 0.75rem; justify-content: flex-end;">
+                <button type="button" onclick="closeAccessRequestModal()" style="padding: 0.75rem 1.5rem; border: 2px solid #e8eef2; background: white; color: #333; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+                    <i class="bi bi-x"></i> Cancel
+                </button>
+                <button type="submit" style="padding: 0.75rem 1.5rem; background: linear-gradient(135deg, var(--evsu-maroon) 0%, var(--evsu-maroon-dark) 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;"
+                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(139,0,0,0.3)';"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                    <i class="bi bi-send"></i> Submit Request
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Animation for modal -->
+<style>
+    @keyframes slideIn {
+        from {
+            transform: translateY(-50px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    
+    #accessRequestModal {
+        animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+</style>
+
+<!-- Modal Control Scripts -->
+<script>
+    // Custom duration field toggle
+    document.getElementById('requestDuration')?.addEventListener('change', function() {
+        const customDiv = document.getElementById('customDurationDiv');
+        if (this.value === 'custom') {
+            customDiv.style.display = 'block';
+            document.getElementById('customDays').focus();
+        } else {
+            customDiv.style.display = 'none';
+        }
+    });
+
+    // Character counter for message
+    document.getElementById('requestMessage')?.addEventListener('input', function() {
+        document.getElementById('charCount').textContent = this.value.length;
+    });
+
+    // Modal functions
+    function openAccessRequestModal(publicationId, publicationTitle) {
+        const modal = document.getElementById('accessRequestModal');
+        document.getElementById('modal-pub-title').textContent = publicationTitle;
+        document.getElementById('accessRequestForm').dataset.pubId = publicationId;
+        modal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeAccessRequestModal() {
+        const modal = document.getElementById('accessRequestModal');
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+        // Reset form
+        document.getElementById('accessRequestForm').reset();
+        document.getElementById('customDurationDiv').style.display = 'none';
+        document.getElementById('charCount').textContent = '0';
+    }
+
+    // Close modal when clicking outside
+    window.addEventListener('click', function(event) {
+        const modal = document.getElementById('accessRequestModal');
+        if (event.target === modal) {
+            closeAccessRequestModal();
+        }
+    });
+
+    // Submit access request
+    function submitAccessRequest(event) {
+        event.preventDefault();
+        
+        const form = event.target;
+        const publicationId = form.dataset.pubId;
+        let duration = document.getElementById('requestDuration').value;
+        
+        // If custom, use custom days
+        if (duration === 'custom') {
+            duration = document.getElementById('customDays').value;
+            if (!duration || duration < 1 || duration > 365) {
+                alert('Please enter a valid number of days (1-365)');
+                return;
+            }
+        }
+        
+        const message = document.getElementById('requestMessage').value;
+        
+        // Create FormData to submit to backend
+        const formData = new FormData();
+        formData.append('publication_id', publicationId);
+        formData.append('requested_duration_days', duration);
+        formData.append('message', message);
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]')?.value || '');
+        
+        // Submit to backend
+        fetch('/access-grant/', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('✓ Access request submitted successfully! The author will review it shortly.');
+                closeAccessRequestModal();
+                // Refresh page to show updated status
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                alert('Error: ' + (data.error || 'Could not submit request'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error submitting request. Please try again.');
+        });
+    }
+
+    // Helper function to get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>

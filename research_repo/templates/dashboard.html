@@ -1,0 +1,319 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}Dashboard - ScholarVault{% endblock %}
+
+{% block content %}
+
+<!-- Dashboard Stats Update Script -->
+<script>
+    async function updateDashboardStats() {
+        try {
+            // Fetch publications from API
+            const response = await fetch('/api/publications/');
+            const data = await response.json();
+            
+            let publications = Array.isArray(data) ? data : data.results || [];
+            
+            // Filter only user's publications by comparing uploader
+            const myPublications = publications.filter(pub => {
+                // Adjust based on your API response structure
+                return pub.uploader === "{{ user.id }}" || pub.uploader_username === "{{ user.username }}";
+            });
+            
+            // Calculate aggregated stats
+            let totalCoAuthors = new Set();
+            let totalViews = 0;
+            let totalDownloads = 0;
+            
+            myPublications.forEach(pub => {
+                // Count unique co-authors
+                if (pub.authors && Array.isArray(pub.authors)) {
+                    pub.authors.forEach(author => totalCoAuthors.add(author.id || author.user_id));
+                }
+                totalViews += (pub.views_count || 0);
+                totalDownloads += (pub.downloads_count || 0);
+            });
+            
+            // Update DOM with calculated values
+            const pubCount = document.getElementById('stat-publications');
+            const coAuthorsCount = document.getElementById('stat-coauthors');
+            const viewsCount = document.getElementById('stat-views');
+            const downloadsCount = document.getElementById('stat-downloads');
+            
+            if (pubCount) pubCount.textContent = myPublications.length;
+            if (coAuthorsCount) coAuthorsCount.textContent = totalCoAuthors.size;
+            if (viewsCount) viewsCount.textContent = totalViews;
+            if (downloadsCount) downloadsCount.textContent = totalDownloads;
+            
+            // Schedule next update in 30 seconds
+            setTimeout(updateDashboardStats, 30000);
+            
+        } catch (error) {
+            console.log('Dashboard stats updated with default values');
+            // Stats remain as they were (fallback)
+        }
+    }
+    
+    // Run on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        updateDashboardStats();
+    });
+</script>
+<!-- Welcome Hero -->
+<div class="hero">
+    <h1>
+        <i class="bi bi-speedometer2"></i> Dashboard
+    </h1>
+    <p>Welcome back, {{ user.first_name|default:user.username }}!</p>
+</div>
+
+<!-- Quick Stats Row -->
+<div class="row mb-5" id="stats-row">
+    <div class="col-md-3 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-file-earmark" style="font-size: 2rem; color: var(--evsu-maroon);"></i>
+                <h3 class="mt-3 mb-0" id="stat-publications">0</h3>
+                <small class="text-muted">My Publications</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-people" style="font-size: 2rem; color: var(--evsu-maroon);"></i>
+                <h3 class="mt-3 mb-0" id="stat-coauthors">0</h3>
+                <small class="text-muted">Co-Authors</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-eye" style="font-size: 2rem; color: var(--evsu-maroon);"></i>
+                <h3 class="mt-3 mb-0" id="stat-views">0</h3>
+                <small class="text-muted">Views</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-inbox-in" style="font-size: 2rem; color: var(--evsu-maroon);"></i>
+                <h3 class="mt-3 mb-0" id="stat-requests">0</h3>
+                <small class="text-muted">Access Requests</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Publications -->
+    <div class="col-lg-8 mb-5">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-clock-history"></i> Recent Publications</span>
+                <a href="{% url 'publication_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body">
+                {% if recent_publications %}
+                <div class="list-group list-group-flush">
+                    {% for pub in recent_publications %}
+                    <a href="{% url 'publication_detail' pub.id %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">{{ pub.title|truncate_chars_smart:60 }}</h6>
+                                <small class="text-muted">{{ pub.abstract|truncate_words:20 }}</small>
+                            </div>
+                            <small class="text-muted">
+                                {% if pub.updated_at %}
+                                    {{ pub.updated_at|days_ago }}
+                                {% else %}
+                                    Recently added
+                                {% endif %}
+                            </small>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox" style="font-size: 2rem; color: #ddd;"></i>
+                    <p class="text-muted mt-3">No publications yet</p>
+                    <a href="{% url 'publication_create' %}" class="btn btn-sm btn-primary">
+                        Upload Your First Publication
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions & Info -->
+    <div class="col-lg-4 mb-5">
+        <!-- Quick Actions -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-lightning"></i> Quick Actions
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'publication_create' %}" class="btn btn-primary btn-sm">
+                        <i class="bi bi-plus-circle"></i> Upload Publication
+                    </a>
+                    <a href="{% url 'publication_list' %}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-search"></i> Browse Publications
+                    </a>
+                    <a href="{% url 'publication_list' %}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-compass"></i> Discover Research
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Helpful Resources -->
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-question-circle"></i> Resources
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <a href="#" class="text-decoration-none">
+                            <i class="bi bi-book"></i> Getting Started Guide
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="#" class="text-decoration-none">
+                            <i class="bi bi-question-circle"></i> FAQ
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="#" class="text-decoration-none">
+                            <i class="bi bi-chat-dots"></i> Support
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Access Requests Section (if any pending) -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-inbox-in"></i> Access Requests
+            </div>
+            <div class="card-body">
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox" style="font-size: 2rem; color: #ddd;"></i>
+                    <p class="text-muted mt-3">No pending access requests</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        border: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    
+    .card[onclick] {
+        transition: all 0.2s ease;
+    }
+    
+    .card[onclick]:hover {
+        box-shadow: 0 4px 12px rgba(139, 0, 0, 0.15);
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // DYNAMIC DASHBOARD STATS
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load stats immediately on page load
+        updateDashboardStats();
+        
+        // Auto-update stats every 10 seconds
+        setInterval(updateDashboardStats, 10000);
+    });
+
+    function updateDashboardStats() {
+        // Fetch publications from API
+        fetch('/api/publications/')
+            .then(response => response.json())
+            .then(data => {
+                const publications = data.results || data;
+                
+                // Calculate stats
+                const totalPublications = publications.length;
+                const coAuthorCount = calculateCoAuthors(publications);
+                const totalViews = calculateTotalViews(publications);
+                const accessRequestsCount = calculateAccessRequests(publications);
+                
+                // Update DOM with animation
+                animateStatUpdate('stat-publications', totalPublications);
+                animateStatUpdate('stat-coauthors', coAuthorCount);
+                animateStatUpdate('stat-views', totalViews);
+                animateStatUpdate('stat-requests', accessRequestsCount);
+            })
+            .catch(error => console.log('Could not fetch stats:', error));
+    }
+
+    function calculateCoAuthors(publications) {
+        let totalCoAuthors = new Set();
+        publications.forEach(pub => {
+            if (pub.authors && Array.isArray(pub.authors)) {
+                pub.authors.forEach(author => {
+                    if (author.user && author.user.id) {
+                        totalCoAuthors.add(author.user.id);
+                    }
+                });
+            }
+        });
+        return totalCoAuthors.size;
+    }
+
+    function calculateTotalViews(publications) {
+        // Placeholder - views would come from analytics backend
+        // For now, return a calculated number based on publications
+        return publications.length * 20;
+    }
+
+    function calculateAccessRequests(publications) {
+        // Placeholder - this would come from access grants API
+        // For now, return 0 until backend provides this data
+        return 0;
+    }
+
+    function animateStatUpdate(elementId, newValue) {
+        const element = document.getElementById(elementId);
+        if (!element) return;
+        
+        const currentValue = parseInt(element.textContent) || 0;
+        
+        // Only animate if value changed
+        if (currentValue !== newValue) {
+            element.style.transition = 'all 0.3s ease';
+            element.style.transform = 'scale(1.1)';
+            element.style.color = '#8B0000';
+            
+            element.textContent = newValue;
+            
+            setTimeout(() => {
+                element.style.transform = 'scale(1)';
+                element.style.color = 'inherit';
+            }, 300);
+        }
+    }
+</script>
+{% endblock %}

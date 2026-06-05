@@ -1,0 +1,303 @@
+{% extends 'base.html' %}
+
+{% block title %}Access Requests - ScholarVault{% endblock %}
+
+{% block content %}
+<div class="container-lg my-5">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="mb-5">
+                <h1 class="text-maroon mb-2">
+                    <i class="bi bi-inbox-in"></i> Access Requests
+                </h1>
+                <p class="text-muted">Manage requests from viewers who want to access your full research publications</p>
+            </div>
+
+            <!-- Filter & Search -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <input 
+                                type="text" 
+                                class="form-control" 
+                                id="searchRequests"
+                                placeholder="Search by publication title or requester name..."
+                            >
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-select" id="filterStatus">
+                                <option value="">All Requests</option>
+                                <option value="pending">Pending</option>
+                                <option value="approved">Approved</option>
+                                <option value="rejected">Rejected</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Requests Tabs -->
+            <ul class="nav nav-tabs mb-4" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab">
+                        <i class="bi bi-clock-history"></i> Pending <span class="badge bg-warning ms-2">0</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="approved-tab" data-bs-toggle="tab" data-bs-target="#approved" type="button" role="tab">
+                        <i class="bi bi-check-circle"></i> Approved <span class="badge bg-success ms-2">0</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="rejected-tab" data-bs-toggle="tab" data-bs-target="#rejected" type="button" role="tab">
+                        <i class="bi bi-x-circle"></i> Rejected <span class="badge bg-danger ms-2">0</span>
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Tab Content -->
+            <div class="tab-content">
+                <!-- Pending Requests -->
+                <div class="tab-pane fade show active" id="pending" role="tabpanel">
+                    <div class="row" id="pendingRequests">
+                        <div class="col-12">
+                            <div class="alert alert-info text-center py-5" role="alert">
+                                <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                                <p class="mt-3 mb-0">No pending access requests at this time.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Approved Requests -->
+                <div class="tab-pane fade" id="approved" role="tabpanel">
+                    <div class="row" id="approvedRequests">
+                        <div class="col-12">
+                            <div class="alert alert-info text-center py-5" role="alert">
+                                <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                                <p class="mt-3 mb-0">No approved access requests yet.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rejected Requests -->
+                <div class="tab-pane fade" id="rejected" role="tabpanel">
+                    <div class="row" id="rejectedRequests">
+                        <div class="col-12">
+                            <div class="alert alert-info text-center py-5" role="alert">
+                                <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                                <p class="mt-3 mb-0">No rejected access requests.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sample Request Card Template (for demonstration) -->
+            <template id="requestCardTemplate">
+                <div class="col-lg-6 mb-4 request-card" data-status="pending">
+                    <div class="card h-100 border-left-primary">
+                        <div class="card-header bg-light">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">
+                                        <i class="bi bi-file-earmark-pdf text-danger"></i>
+                                        <span class="publication-title">Research Paper Title</span>
+                                    </h6>
+                                    <small class="text-muted">Your Publication</small>
+                                </div>
+                                <span class="badge bg-warning">Pending</span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <h6 class="text-muted mb-2">Requested By:</h6>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-circle me-2" style="width: 40px; height: 40px; background: #8B0000; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                                        <span class="requester-initial">R</span>
+                                    </div>
+                                    <div>
+                                        <p class="mb-0 fw-600"><span class="requester-name">Researcher Name</span></p>
+                                        <small class="text-muted"><span class="requester-email">researcher@evsu.edu.ph</span></small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <h6 class="text-muted mb-2">Request Purpose:</h6>
+                                <p class="mb-0 text-muted">
+                                    <span class="request-purpose">To use as reference for my research project</span>
+                                </p>
+                            </div>
+
+                            <div class="mb-3">
+                                <h6 class="text-muted mb-2">Requested Date:</h6>
+                                <p class="mb-0 text-muted">
+                                    <i class="bi bi-calendar"></i>
+                                    <span class="request-date">June 4, 2026</span>
+                                </p>
+                            </div>
+
+                            <hr class="my-3">
+
+                            <div class="d-grid gap-2 d-sm-flex">
+                                <button class="btn btn-success btn-sm flex-grow-1 approve-btn" title="Approve access request">
+                                    <i class="bi bi-check-circle"></i> Approve
+                                </button>
+                                <button class="btn btn-danger btn-sm flex-grow-1 reject-btn" title="Reject access request">
+                                    <i class="bi bi-x-circle"></i> Reject
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Help Information -->
+            <div class="alert alert-info mt-5" role="alert">
+                <h6 class="alert-heading">
+                    <i class="bi bi-info-circle"></i> How Access Requests Work
+                </h6>
+                <ul class="small mb-0">
+                    <li><strong>Pending:</strong> New requests waiting for your review and decision</li>
+                    <li><strong>Approved:</strong> Requests you've approved - users now have access to your publication</li>
+                    <li><strong>Rejected:</strong> Requests you've declined - users cannot access your publication</li>
+                    <li>You can change your decision on approved requests by modifying the access grant</li>
+                    <li>All approved access grants have an expiration date for security</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.border-left-primary {
+    border-left: 4px solid var(--evsu-maroon) !important;
+}
+
+.avatar-circle {
+    font-size: 0.9rem;
+}
+
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 8px 24px rgba(139, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.btn-sm {
+    font-size: 0.85rem;
+}
+
+#filterStatus {
+    border-color: #e0e0e0;
+}
+
+#searchRequests {
+    border-color: #e0e0e0;
+}
+
+.badge {
+    font-size: 0.75rem;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Search functionality
+    const searchInput = document.getElementById('searchRequests');
+    searchInput.addEventListener('input', function() {
+        filterRequests();
+    });
+
+    // Filter functionality
+    const filterSelect = document.getElementById('filterStatus');
+    filterSelect.addEventListener('change', function() {
+        filterRequests();
+    });
+
+    function filterRequests() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const filterStatus = filterSelect.value;
+        const cards = document.querySelectorAll('.request-card');
+
+        cards.forEach(card => {
+            const title = card.querySelector('.publication-title').textContent.toLowerCase();
+            const name = card.querySelector('.requester-name').textContent.toLowerCase();
+            const status = card.getAttribute('data-status');
+
+            const matchesSearch = title.includes(searchTerm) || name.includes(searchTerm);
+            const matchesFilter = !filterStatus || status === filterStatus;
+
+            card.style.display = (matchesSearch && matchesFilter) ? 'block' : 'none';
+        });
+    }
+
+    // Approve request
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.approve-btn')) {
+            const card = e.target.closest('.request-card');
+            const requesterName = card.querySelector('.requester-name').textContent;
+            const publicationTitle = card.querySelector('.publication-title').textContent;
+
+            if (confirm(`Approve access request from ${requesterName} for "${publicationTitle}"?`)) {
+                // Move card to approved section
+                card.setAttribute('data-status', 'approved');
+                const badge = card.querySelector('.badge');
+                badge.textContent = 'Approved';
+                badge.className = 'badge bg-success';
+                
+                // Hide action buttons
+                card.querySelectorAll('.approve-btn, .reject-btn').forEach(btn => {
+                    btn.style.display = 'none';
+                });
+
+                // Add info message
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'alert alert-success alert-sm mb-0';
+                infoDiv.innerHTML = '<i class="bi bi-check-circle"></i> Access granted - user can now view this publication';
+                card.querySelector('.card-body').appendChild(infoDiv);
+
+                alert(`Access approved for ${requesterName}. They can now view the full publication.`);
+            }
+        }
+    });
+
+    // Reject request
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.reject-btn')) {
+            const card = e.target.closest('.request-card');
+            const requesterName = card.querySelector('.requester-name').textContent;
+            const publicationTitle = card.querySelector('.publication-title').textContent;
+
+            if (confirm(`Reject access request from ${requesterName} for "${publicationTitle}"?`)) {
+                // Move card to rejected section
+                card.setAttribute('data-status', 'rejected');
+                const badge = card.querySelector('.badge');
+                badge.textContent = 'Rejected';
+                badge.className = 'badge bg-danger';
+                
+                // Hide action buttons
+                card.querySelectorAll('.approve-btn, .reject-btn').forEach(btn => {
+                    btn.style.display = 'none';
+                });
+
+                // Add info message
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'alert alert-danger alert-sm mb-0';
+                infoDiv.innerHTML = '<i class="bi bi-x-circle"></i> Access denied - user cannot view this publication';
+                card.querySelector('.card-body').appendChild(infoDiv);
+
+                alert(`Access denied for ${requesterName}.`);
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

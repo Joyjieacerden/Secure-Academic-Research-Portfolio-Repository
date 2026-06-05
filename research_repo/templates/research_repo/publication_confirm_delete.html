@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Publication - ScholarVault{% endblock %}
+
+{% block content %}
+<!-- Delete Confirmation Hero -->
+<div class="hero bg-danger">
+    <h1>
+        <i class="bi bi-exclamation-triangle"></i> Delete Publication?
+    </h1>
+    <p>This action cannot be undone</p>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card border-danger mb-4">
+            <div class="card-header bg-danger text-white">
+                <i class="bi bi-trash"></i> Confirm Deletion
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger mb-4">
+                    <i class="bi bi-exclamation-circle"></i>
+                    <strong>Warning:</strong> You are about to permanently delete this publication. This action cannot be reversed.
+                </div>
+
+                <!-- Publication Details -->
+                <div class="mb-4 p-3" style="background: #f8f9fa; border-radius: 8px;">
+                    <h5 class="mb-2">{{ publication.title }}</h5>
+                    <p class="text-muted mb-0">{{ publication.abstract|truncatewords:30 }}</p>
+                </div>
+
+                <!-- Warning Info -->
+                <div class="alert alert-light border mb-4">
+                    <p class="small mb-2"><strong>Deleting this publication will:</strong></p>
+                    <ul class="small mb-0">
+                        <li>Remove all publication data</li>
+                        <li>Revoke all access grants to this publication</li>
+                        <li>Remove all authorship records</li>
+                        <li>This cannot be undone</li>
+                    </ul>
+                </div>
+
+                <!-- Action Buttons -->
+                <form method="POST" class="d-grid gap-2">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-lg">
+                        <i class="bi bi-trash"></i> Yes, Delete Publication
+                    </button>
+                    <a href="{% url 'publication_detail' publication.pk %}" class="btn btn-outline-secondary btn-lg">
+                        <i class="bi bi-arrow-left"></i> Cancel - Keep Publication
+                    </a>
+                </form>
+            </div>
+        </div>
+
+        <!-- Help Section -->
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-info-circle"></i> Need Help?
+            </div>
+            <div class="card-body">
+                <p class="small mb-2">If you're unsure, you can:</p>
+                <ul class="small mb-0">
+                    <li>Make the publication private instead of deleting</li>
+                    <li>Archive the publication for later</li>
+                    <li>Contact support for assistance</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero.bg-danger {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
+    }
+    
+    .card {
+        border: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    
+    .border-danger {
+        border-color: #dc3545 !important;
+    }
+</style>
+{% endblock %}

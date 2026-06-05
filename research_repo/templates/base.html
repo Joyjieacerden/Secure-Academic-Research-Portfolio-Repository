@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    
+    <title>{% block title %}ScholarVault - Academic Research Portfolio{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <style>
+        /* EVSU Maroon Theme */
+        :root {
+            --evsu-maroon: #8B0000;
+            --evsu-maroon-dark: #6B0000;
+            --evsu-maroon-light: #A52A2A;
+            --evsu-gold: #FFD700;
+            --evsu-gray: #f8f9fa;
+        }
+        
+        * {
+            transition: all 0.3s ease-in-out;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #fff;
+            color: #333;
+        }
+        
+        /* Navigation */
+        .navbar {
+            background: linear-gradient(135deg, var(--evsu-maroon) 0%, var(--evsu-maroon-dark) 100%);
+            box-shadow: 0 2px 8px rgba(139, 0, 0, 0.15);
+            padding: 1rem 0;
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: white !important;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .navbar-brand i {
+            font-size: 1.75rem;
+        }
+        
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8) !important;
+            font-weight: 500;
+            position: relative;
+            margin: 0 0.5rem;
+        }
+        
+        .nav-link:hover {
+            color: white !important;
+            transform: translateY(-2px);
+        }
+        
+        .nav-link.active {
+            color: var(--evsu-gold) !important;
+            border-bottom: 2px solid var(--evsu-gold);
+        }
+        
+        .btn-logout {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid white;
+        }
+        
+        .btn-logout:hover {
+            background-color: white;
+            color: var(--evsu-maroon);
+        }
+        
+        /* Buttons */
+        .btn-primary {
+            background-color: var(--evsu-maroon);
+            border-color: var(--evsu-maroon);
+            font-weight: 600;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--evsu-maroon-dark);
+            border-color: var(--evsu-maroon-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(139, 0, 0, 0.3);
+        }
+        
+        .btn-primary:active {
+            background-color: var(--evsu-maroon-dark);
+            transform: translateY(0);
+        }
+        
+        .btn-outline-primary {
+            color: var(--evsu-maroon);
+            border-color: var(--evsu-maroon);
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--evsu-maroon);
+            border-color: var(--evsu-maroon);
+            color: white;
+        }
+        
+        /* Cards */
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            box-shadow: 0 8px 24px rgba(139, 0, 0, 0.15);
+            transform: translateY(-4px);
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--evsu-maroon) 0%, var(--evsu-maroon-light) 100%);
+            color: white;
+            border-radius: 12px 12px 0 0 !important;
+            font-weight: 600;
+            border: none;
+        }
+        
+        .badge-primary {
+            background-color: var(--evsu-maroon);
+        }
+        
+        .badge-success {
+            background-color: #28a745;
+        }
+        
+        .badge-warning {
+            background-color: #ffc107;
+            color: #333;
+        }
+        
+        /* Forms */
+        .form-control, .form-select {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 0.625rem 0.875rem;
+            font-size: 0.95rem;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--evsu-maroon);
+            box-shadow: 0 0 0 0.2rem rgba(139, 0, 0, 0.25);
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-text {
+            color: #666;
+            font-size: 0.875rem;
+        }
+        
+        /* Alerts */
+        .alert {
+            border-radius: 8px;
+            border: none;
+            animation: slideInDown 0.3s ease;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .alert-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, var(--evsu-maroon) 0%, var(--evsu-maroon-dark) 100%);
+            color: white;
+            padding: 4rem 0;
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .hero h1 {
+            font-weight: 700;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .hero p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        /* Tables */
+        .table {
+            border-collapse: collapse;
+        }
+        
+        .table thead th {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid var(--evsu-maroon);
+            color: var(--evsu-maroon);
+            font-weight: 600;
+        }
+        
+        .table tbody tr:hover {
+            background-color: rgba(139, 0, 0, 0.05);
+        }
+        
+        /* Badges */
+        .badge {
+            padding: 0.5rem 0.75rem;
+            border-radius: 20px;
+            font-weight: 500;
+            font-size: 0.85rem;
+        }
+        
+        /* Footer */
+        footer {
+            background-color: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+            padding: 2rem 0;
+            margin-top: 4rem;
+        }
+        
+        footer p {
+            color: #666;
+            margin: 0;
+        }
+        
+        /* Utility Classes */
+        .text-maroon {
+            color: var(--evsu-maroon);
+        }
+        
+        .bg-maroon {
+            background-color: var(--evsu-maroon);
+        }
+        
+        .border-maroon {
+            border-color: var(--evsu-maroon) !important;
+        }
+        
+        .text-truncate-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .text-truncate-3 {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        /* Animations */
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+        
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .navbar-brand {
+                font-size: 1.25rem;
+            }
+            
+            .hero {
+                padding: 2rem 0;
+            }
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container-lg">
+            <a class="navbar-brand" href="{% url 'publication_list' %}">
+                <i class="bi bi-book-half"></i>
+                ScholarVault
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'publication_list' %}active{% endif %}" href="{% url 'publication_list' %}">
+                            <i class="bi bi-journals"></i> Browse
+                        </a>
+                    </li>
+                    {% if user.can_upload %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'publication_create' %}active{% endif %}" href="{% url 'publication_create' %}">
+                            <i class="bi bi-plus-circle"></i> Upload
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userMenu" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> {{ user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
+                            <li><a class="dropdown-item" href="{% url 'settings' %}"><i class="bi bi-gear"></i> Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form method="post" action="{% url 'logout' %}">
+                                    {% csrf_token %}
+                                    <button type="submit">Logout</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'login' %}"><i class="bi bi-box-arrow-in-right"></i> Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'signup' %}"><i class="bi bi-person-plus"></i> Register</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+        <div class="container-lg">
+            {% if messages %}
+            <div class="messages mt-4">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-5">
+        <div class="container-lg">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5 class="text-maroon">
+                        <i class="bi bi-book-half"></i> ScholarVault
+                    </h5>
+                    <p>A secure platform for academic research and faculty portfolios.</p>
+                    <p class="text-muted">Powered by Eastern Visayas State University (EVSU)</p>
+                </div>
+                <div class="col-md-3">
+                    <h6>Quick Links</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="{% url 'publication_list' %}" class="text-decoration-none">Browse Publications</a></li>
+                        <li><a href="{% url 'publication_list' %}" class="text-decoration-none">Discover Research</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h6>Contact</h6>
+                    <p class="small">
+                        Eastern Visayas State University<br>
+                        <a href="mailto:support@evsu.edu.ph" class="text-decoration-none">support@evsu.edu.ph</a>
+                    </p>
+                </div>
+            </div>
+            <hr class="my-3">
+            <div class="row">
+                <div class="col-12">
+                    <p class="text-center text-muted small mb-0">
+                        &copy; 2024 Eastern Visayas State University. All rights reserved.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

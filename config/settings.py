@@ -11,6 +11,14 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+import os
+import dj_database_url
+from dotenv import load_dotenv
+
+
+# Ensure Django loads your .env variables
+load_dotenv()
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +28,41 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-*yrjqci1wrbpb3#)4z$gu7%12&edw&b15i9@f7taknty(3e)gr'
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'fallback-insecure-key-for-local-only')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Fix: Support both lower-case and upper-case 'false' from Render environment
+DEBUG = os.getenv('DJANGO_DEBUG', 'True').strip().lower() == 'true'
 
-ALLOWED_HOSTS = []
+# Dynamic allowed hosts handling for seamless deployment infrastructure
+# FIXED: Changed key from 'DJANGO_ALLOWED_HOSTS' to 'ALLOWED_HOSTS' to match your Render Dashboard
+ALLOWED_HOSTS = [
+    host.strip() 
+    for host in os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+    if host.strip()
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://secure-academic-research-portfolio.onrender.com',
+]
+
+USE_X_FORWARDED_HOST = True
+# FIXED: Tells Django that Render safely terminates the SSL connection 
+# This prevents infinite loops and Bad Requests when SECURE_SSL_REDIRECT is active
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+AUTH_USER_MODEL = 'research_repo.User'
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/login/'
+
+# ---------------------------------------------------------------------------
+# INSTITUTIONAL EMAIL RESTRICTION
+# Only accounts with this email domain are permitted to register.
+# Override via ALLOWED_EMAIL_DOMAIN env var for other deployments.
+# ---------------------------------------------------------------------------
+ALLOWED_EMAIL_DOMAIN = os.getenv('ALLOWED_EMAIL_DOMAIN', 'evsu.edu.ph')
+
 
 
 # Application definition
@@ -36,17 +73,28 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'cloudinary_storage', 
     'django.contrib.staticfiles',
+    'research_repo',
+    'cloudinary',
+    'publication_api',
+    'rest_framework', 
+    'axes'
 ]
+
+print(f"DEBUG: Cloud Name is {os.getenv('CLOUDINARY_CLOUD_NAME')}")
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # white Noise
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # FIXED: Added AxesMiddleware at the end to catch all incoming authentication requests safely
+    'axes.middleware.AxesMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -66,18 +114,55 @@ TEMPLATES = [
     },
 ]
 
+REST_FRAMEWORK = {
+
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/day',
+        'user': '1000/day'
+    }
+}
+
 WSGI_APPLICATION = 'config.wsgi.application'
 
 
-# Database
+# Database Configuration
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+if os.getenv('DATABASE_URL'):
+    # Production: Use Render's PostgreSQL database
+    DATABASES = {
+        'default': dj_database_url.config(
+            conn_max_age=600,
+            conn_health_checks=True,
+            ssl_require=True
+        )
     }
-}
+else:
+    # Local Development: Fall back to SQLite automatically
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+    
+    
+# ---------------------------------------------------------------------------
+# AUTHENTICATION
+# ---------------------------------------------------------------------------
+
+AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',  # Task 1 – axes must be first
+    'django.contrib.auth.backends.ModelBackend',
+]
 
 
 # Password validation
@@ -98,6 +183,173 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# ---------------------------------------------------------------------------
+# TASK 1 — BRUTE-FORCE PROTECTION (django-axes)
+# ---------------------------------------------------------------------------
+
+AXES_ENABLED = True
+AXES_FAILURE_LIMIT = 5                    
+AXES_COOLOFF_TIME = 1                     
+AXES_LOCK_OUT_AT_FAILURE = True
+AXES_RESET_ON_SUCCESS = True             
+AXES_LOCKOUT_PARAMETERS = [             
+    ['ip_address', 'username'],
+]
+# CHANGE THIS FROM 0 TO 1:
+AXES_IPWARE_PROXY_COUNT = 1              
+AXES_VERBOSE = True
+
+AXES_LOCKOUT_TEMPLATE = None            # let middleware return 403
+AXES_NEVER_LOCKOUT_WHITELIST = False
+
+# ---------------------------------------------------------------------------
+# TASK 2 — HONEYPOT (django-honeypot)
+# ---------------------------------------------------------------------------
+
+HONEYPOT_FIELD_NAME = 'website'     # hidden field name bots fill in
+HONEYPOT_VALUE = ''                      # expected value is empty
+
+# ---------------------------------------------------------------------------
+# TASK 3 — AUDIT LOGGING  (see security/audit_logger.py)
+# ---------------------------------------------------------------------------
+
+LOG_DIR = os.path.join(BASE_DIR, 'logs')
+os.makedirs(LOG_DIR, exist_ok=True)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+
+    'formatters': {
+        'json_audit': {
+            '()': 'security.formatters.JSONAuditFormatter',
+        },
+        'verbose': {
+            'format': '[{levelname}] {asctime} {name} {message}',
+            'style': '{',
+        },
+    },
+
+    'handlers': {
+        'audit_file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOG_DIR, 'audit.log'),
+            'maxBytes': 10 * 1024 * 1024,   # 10 MB
+            'backupCount': 10,
+            'formatter': 'json_audit',
+            'encoding': 'utf-8',
+        },
+        'security_file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOG_DIR, 'security.log'),
+            'maxBytes': 10 * 1024 * 1024,
+            'backupCount': 10,
+            'formatter': 'json_audit',
+            'encoding': 'utf-8',
+        },
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+
+    'loggers': {
+        'security.audit': {
+            'handlers': ['audit_file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'security.brute_force': {
+            'handlers': ['security_file', 'console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'security.honeypot': {
+            'handlers': ['security_file', 'console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'axes': {
+            'handlers': ['security_file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'django.security': {
+            'handlers': ['security_file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}
+
+# ---------------------------------------------------------------------------
+# TASK 6 — HTTP SECURITY HEADERS
+# ---------------------------------------------------------------------------
+
+# --- Strict-Transport-Security ---
+SECURE_HSTS_SECONDS = 31536000          # 1 year
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+
+# --- SSL redirect (enable in production) ---
+SECURE_SSL_REDIRECT = not DEBUG
+
+# --- Cookie security ---
+SESSION_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_AGE = 3600               # 1 hour session timeout
+
+CSRF_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = 'Lax'
+
+# --- Misc ---
+SECURE_CONTENT_TYPE_NOSNIFF = True      # X-Content-Type-Options: nosniff
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = 'DENY'               # X-Frame-Options
+
+# --- Referrer-Policy ---
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+
+# --- Content-Security-Policy (django-csp 4.0 format) ---
+# In dev (DEBUG=True): report-only mode. In prod: enforcing mode.
+_CSP_DIRECTIVES = {
+    'default-src': ("'self'",),
+    'script-src': ("'self'",),
+    'style-src': ("'self'", "'unsafe-inline'"),   # inline styles needed by Django admin
+    'img-src': ("'self'", "data:", "res.cloudinary.com", "*.cloudinary.com"),
+    'font-src': ("'self'",),
+    'connect-src': ("'self'",),
+    'frame-ancestors': ("'none'",),
+    'form-action': ("'self'",),
+    'base-uri': ("'none'",),
+    'object-src': ("'none'",),
+}
+
+if DEBUG:
+    CONTENT_SECURITY_POLICY_REPORT_ONLY = {'DIRECTIVES': _CSP_DIRECTIVES}
+else:
+    CONTENT_SECURITY_POLICY = {'DIRECTIVES': _CSP_DIRECTIVES}
+
+# --- Permissions-Policy (django-permissions-policy) ---
+PERMISSIONS_POLICY = {
+    'accelerometer': [],
+    'camera': [],
+    'geolocation': [],
+    'gyroscope': [],
+    'magnetometer': [],
+    'microphone': [],
+    'payment': [],
+    'usb': [],
+}
+
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
@@ -111,7 +363,31 @@ USE_I18N = True
 USE_TZ = True
 
 
+
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+
+# Media files configuration for Cloudinary
+MEDIA_URL = '/media/'
+
+
+# Cloudinary Settings
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
+}
+
+# Use Cloudinary for media storage
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+
+# FIXED: Suppress models.W042 by choosing BigAutoField as the modern standard primary key
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
