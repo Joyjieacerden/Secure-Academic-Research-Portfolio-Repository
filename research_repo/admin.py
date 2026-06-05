@@ -15,6 +15,13 @@ class PublicationAdmin(admin.ModelAdmin):
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     search_fields = ('username', 'email')  # Enable search by username and email
+    list_display = ('username', 'is_faculty', 'is_identity_verified', 'has_id_uploaded')
+    list_editable = ('is_identity_verified',)
+
+    def has_id_uploaded(self, obj):
+        return bool(obj.id_document)
+    has_id_uploaded.boolean = True
+    has_id_uploaded.short_description = 'ID Uploaded'
 
 @admin.register(AccessGrant)
 class AccessGrantAdmin(admin.ModelAdmin):
