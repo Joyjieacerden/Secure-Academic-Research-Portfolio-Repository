@@ -31,12 +31,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'fallback-insecure-key-for-local-only')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
+# Fix: Support both lower-case and upper-case 'false' from Render environment
+DEBUG = os.getenv('DJANGO_DEBUG', 'True').strip().lower() == 'true'
 
 # Dynamic allowed hosts handling for seamless deployment infrastructure
+# FIXED: Changed key from 'DJANGO_ALLOWED_HOSTS' to 'ALLOWED_HOSTS' to match your Render Dashboard
 ALLOWED_HOSTS = [
     host.strip() 
-    for host in os.getenv('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+    for host in os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
     if host.strip()
 ]
 
@@ -45,6 +47,9 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 USE_X_FORWARDED_HOST = True
+# FIXED: Tells Django that Render safely terminates the SSL connection 
+# This prevents infinite loops and Bad Requests when SECURE_SSL_REDIRECT is active
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 AUTH_USER_MODEL = 'research_repo.User'
 LOGIN_URL = '/login/'
