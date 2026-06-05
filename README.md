@@ -8,12 +8,43 @@ An enterprise-grade, secure digital portfolio generator and research repository 
 
 Every team member is graded individually during the face-to-face defense based on their mastery of their assigned enterprise domain:
 
-Joyce L. Acerden - Handles the automated deployment process using a Linux script (build.sh) that is configured to stop immediately if any error occurs (set -o errexit). She also set up Cloudinary (MediaCloudinaryStorage) to handle large media files so they don't take up local disk space, and used python-dotenv to safely hide private credentials and keys from the public repository.
-Mark Steven Camposano- Built the API endpoints using Django REST Framework (DRF) to handle data requests. He set up token authentication with JSON Web Tokens (JWT) to manage user login sessions, and created a security layer inside the API serializers to hide sensitive data fields from unverified users.
-Ann Trecia C. Balendo- Designed the database structure by linking research papers (ResearchPaper) with their co-authors (CoAuthor) using proper foreign keys. She also wrote custom permission logic in the backend views to prevent IDOR attacks, making sure users can only see or edit their own records and can't tamper with anyone else's files.
-Rochelle M. Florendo - Designed and built the responsive user dashboards and interactive search filters for the website. She also developed dynamic inline formsets for the co-authors, allowing users to add multiple authors on the fly without the whole page having to reload, and created custom backend template tags to display data cleaner.
-Rainier O. Orogan - Focused on the defensive security setup for our project. He integrated django-axes to stop brute-force attacks by temporarily blocking IPs that fail to log in too many times. He also put in threat-monitoring honeypots to catch attackers, created an audit trail that logs high-severity system events automatically, and ran vulnerability scans to make sure our code was secure.
+### 📋 Overview Matrix
 
+| Team Member | Domain / Focus Area | Core Technical Stack & Implementations |
+| :--- | :--- | :--- |
+| **Joyce L. Acerden** | DevOps & Cloud Infrastructure | Bash scripting (`build.sh`), `set -o errexit`, Cloudinary, `python-dotenv` |
+| **Mark Steven Camposano** | Backend API & Authentication | Django REST Framework (DRF), JWT, Serializer-level data masking |
+| **Ann Trecia C. Balendo** | Data Architecture & Security | Relational database mapping, IDOR mitigation, View-level permissions |
+| **Rochelle M. Florendo** | UI/UX & Frontend Engineering | Responsive dashboards, Dynamic inline formsets, Custom template tags |
+| **Rainier O. Orogan** | Cyber Security & Auditing | `django-axes`, Threat-monitoring honeypots, Automated audit logging |
+
+---
+
+### 👤 Detailed Contributions
+
+#### 🚀 Joyce L. Acerden — DevOps & Cloud Infrastructure
+* **Automated Deployment:** Engineered the automated deployment pipeline using a Linux script (`build.sh`) configured with `set -o errexit` to halt execution immediately upon encountering an error.
+* **Cloud Storage Management:** Integrated Cloudinary (`MediaCloudinaryStorage`) to handle large media file uploads, optimizing local disk space utilization.
+* **Environment Security:** Implemented `python-dotenv` to isolate and securely manage private credentials and API keys away from the public repository.
+
+#### 🛠️ Mark Steven Camposano — Backend API & Authentication
+* **API Endpoints:** Developed robust RESTful API endpoints using the Django REST Framework (DRF) to efficiently handle system data requests.
+* **Session Management:** Established a secure token authentication system using JSON Web Tokens (JWT) to manage user login sessions.
+* **Data Privacy:** Implemented a security layer directly within the API serializers to mask and restrict sensitive data fields from unverified users.
+
+#### 📊 Ann Trecia C. Balendo — Data Architecture & Security
+* **Database Design:** Structured the relational database schema, properly mapping relationships between research papers (`ResearchPaper`) and their respective co-authors (`CoAuthor`) using explicit foreign keys.
+* **Access Control:** Developed custom backend permission logic within views to prevent Insecure Direct Object Reference (IDOR) attacks, ensuring users can only view or modify their own records.
+
+#### 💻 Rochelle M. Florendo — UI/UX & Frontend Engineering
+* **Dashboard Design:** Designed and developed the website's responsive user dashboards and interactive search filter systems.
+* **Dynamic Form Handling:** Built dynamic inline formsets for the co-author management module, allowing seamless, real-time author additions without requiring page reloads.
+* **Data Presentation:** Created custom backend template tags to clean and properly format raw data before rendering it to the frontend.
+
+#### 🛡️ Rainier O. Orogan — Cyber Security & Auditing
+* **Brute-Force Defense:** Integrated `django-axes` to defend against brute-force attacks by implementing temporary IP rate-limiting and lockout mechanics after successive failed logins.
+* **Threat Detection:** Deployed active threat-monitoring honeypots to detect and trap malicious actors.
+* **Compliance & Monitoring:** Built an automated audit trail system that logs high-severity system events, paired with routine vulnerability scans to ensure code integrity.
 ---
 
 ## 🛠️ Advanced Technical Architecture & Implementation
