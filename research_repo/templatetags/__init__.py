@@ -1,1 +1,1 @@
-# Django template tags package for ScholarVault
+# Template tags module

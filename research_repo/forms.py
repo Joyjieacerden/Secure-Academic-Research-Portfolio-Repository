@@ -24,13 +24,17 @@ class SignUpForm(UserCreationForm):
 class PublicationForm(ModelForm):
     class Meta:
         model = Publication
-        fields = ['title', 'abstract', 'full_pdf', 'is_public', 'auto_approve_access']
+        fields = ['title', 'abstract', 'full_pdf', 'publication_date', 'is_public', 'auto_approve_access']
         
         # Override the default widget so it acts as a file upload field
         widgets = {
             'full_pdf': forms.FileInput(attrs={
                 'accept': '.pdf',  # Optional: Restricts the file picker to only show PDFs
                 'class': 'form-control' # Optional: Add your CSS/Bootstrap styling class here
+            }),
+            'publication_date': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'form-control'
             }),
         }    
 # end

@@ -251,7 +251,7 @@ class DashboardView(LoginRequiredMixin, DetailView):
 class DiscoveryView(TemplateView):
     template_name = 'research_repo/discovery.html'
 
-    def get(self, request, *args, **kwargs):
-        # HARD DIAGNOSTIC: Does this reach the view?
-        print("DiscoveryView reached!") 
-        return super().get(request, *args, **kwargs)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['public_publications'] = Publication.objects.filter(is_public=True).select_related('uploader').prefetch_related('authors')
+        return context

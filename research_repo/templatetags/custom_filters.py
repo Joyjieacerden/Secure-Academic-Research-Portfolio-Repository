@@ -1,293 +1,250 @@
-"""
-Custom template tags and filters for ScholarVault
-Provides utility functions for:
-- Text truncation and formatting
-- Date/time formatting
-- Access control display
-- Publication status badges
-- Author listing utilities
-"""
-
 from django import template
-from django.utils.html import escape
-from django.template.defaultfilters import stringformat
-from datetime import datetime, timedelta
+from django.utils.html import format_html
+from datetime import datetime
 
 register = template.Library()
 
+# ============================================================================
+# DATE FORMATTING FILTERS
+# ============================================================================
 
 @register.filter
-def truncate_words(text, num_words=50):
+def format_publication_date(date_value):
     """
-    Truncate text to a specified number of words and add ellipsis.
+    Format publication date as 'Mon DD, YYYY'
+    If no date provided, returns 'Not set'
+    
+    Usage: {{ publication.publication_date|format_publication_date }}
+    """
+    if not date_value:
+        return 'Not set'
+    
+    try:
+        if isinstance(date_value, str):
+            date_value = datetime.strptime(date_value, '%Y-%m-%d').date()
+        return date_value.strftime('%b %d, %Y')
+    except (ValueError, AttributeError):
+        return 'Invalid date'
+
+
+@register.filter
+def format_created_date(datetime_value):
+    """
+    Format created_at datetime as 'Mon DD, YYYY at HH:MM'
+    
+    Usage: {{ publication.created_at|format_created_date }}
+    """
+    if not datetime_value:
+        return 'Not available'
+    
+    try:
+        return datetime_value.strftime('%b %d, %Y at %H:%M')
+    except AttributeError:
+        return 'Invalid date'
+
+
+@register.filter
+def days_since(date_value):
+    """
+    Return number of days since given date
+    
+    Usage: {{ publication.publication_date|days_since }} days ago
+    """
+    if not date_value:
+        return 'unknown'
+    
+    try:
+        if isinstance(date_value, str):
+            date_value = datetime.strptime(date_value, '%Y-%m-%d').date()
+        delta = datetime.now().date() - date_value
+        return delta.days
+    except (ValueError, AttributeError, TypeError):
+        return 'unknown'
+
+
+# ============================================================================
+# STATUS & BADGE FILTERS
+# ============================================================================
+
+@register.filter
+def status_badge(is_public):
+    """
+    Return HTML badge for publication status
+    
+    Usage: {{ publication.is_public|status_badge|safe }}
+    """
+    if is_public:
+        return format_html(
+            '<span class="badge" style="background-color: #d4edda; color: #1e5631; padding: 0.5rem 0.875rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">Published</span>'
+        )
+    else:
+        return format_html(
+            '<span class="badge" style="background-color: #fff3e0; color: #e65100; padding: 0.5rem 0.875rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">Draft</span>'
+        )
+
+
+@register.filter
+def access_status_badge(access_granted):
+    """
+    Return HTML badge for access status
+    
+    Usage: {{ access_grant.access_granted|access_status_badge|safe }}
+    """
+    if access_granted:
+        return format_html(
+            '<span class="badge" style="background-color: #d4edda; color: #1e5631; padding: 0.4rem 0.75rem; border-radius: 15px; font-size: 0.75rem; font-weight: 600;"><i class="bi bi-check-circle"></i> Granted</span>'
+        )
+    else:
+        return format_html(
+            '<span class="badge" style="background-color: #f8d7da; color: #721c24; padding: 0.4rem 0.75rem; border-radius: 15px; font-size: 0.75rem; font-weight: 600;"><i class="bi bi-x-circle"></i> Pending</span>'
+        )
+
+
+# ============================================================================
+# TEXT TRUNCATION FILTERS
+# ============================================================================
+
+@register.filter
+def truncate_words(text, num_words=20):
+    """
+    Truncate text to specified number of words and add ellipsis
     
     Usage: {{ publication.abstract|truncate_words:30 }}
     """
     if not text:
-        return ""
+        return ''
     
     words = text.split()
-    if len(words) <= num_words:
-        return text
-    
-    return " ".join(words[:num_words]) + "..."
+    if len(words) > num_words:
+        return ' '.join(words[:num_words]) + '...'
+    return text
 
 
 @register.filter
-def format_date(date_obj):
+def truncate_chars(text, num_chars=100):
     """
-    Format date in a readable format.
+    Truncate text to specified number of characters and add ellipsis
     
-    Usage: {{ publication.created_at|format_date }}
+    Usage: {{ publication.title|truncate_chars:50 }}
     """
-    if not date_obj:
-        return "N/A"
+    if not text:
+        return ''
     
-    if isinstance(date_obj, str):
-        try:
-            date_obj = datetime.fromisoformat(date_obj.replace('Z', '+00:00'))
-        except:
-            return date_obj
+    if len(text) > num_chars:
+        return text[:num_chars] + '...'
+    return text
+
+
+# ============================================================================
+# LIST/ARRAY FILTERS
+# ============================================================================
+
+@register.filter
+def join_authors(authors, separator=', '):
+    """
+    Join author names with separator
     
-    today = datetime.now().date() if hasattr(datetime.now(), 'date') else datetime.now()
-    if isinstance(date_obj, datetime):
-        date_obj = date_obj.date()
+    Usage: {{ publication.authors.all|join_authors|safe }}
+    """
+    if not authors:
+        return 'No authors'
     
-    if date_obj == today:
-        return "Today"
-    elif date_obj == today - timedelta(days=1):
-        return "Yesterday"
-    elif date_obj > today - timedelta(days=7):
-        days_ago = (today - date_obj).days
-        return f"{days_ago} days ago"
-    
-    return date_obj.strftime("%b %d, %Y")
+    try:
+        author_names = [f"{author.user.get_full_name() or author.user.username}" for author in authors]
+        return separator.join(author_names)
+    except (AttributeError, TypeError):
+        return 'Invalid authors'
 
 
 @register.filter
-def author_names(authors, limit=3):
+def author_roles(authors):
     """
-    Format a list of authors as a comma-separated string with limit.
+    Format authors with their roles as HTML list
     
-    Usage: {{ publication.authors.all|author_names:5 }}
+    Usage: {{ publication.authors.all|author_roles|safe }}
     """
-    author_list = list(authors)
+    if not authors:
+        return format_html('<em>No authors</em>')
     
-    if len(author_list) <= limit:
-        return ", ".join([a.user.username for a in author_list])
+    try:
+        roles_html = '<ul style="margin: 0; padding-left: 1.5rem; font-size: 0.9rem;">'
+        for author in authors:
+            name = author.user.get_full_name() or author.user.username
+            role = author.contribution_role or 'Contributor'
+            roles_html += f'<li><strong>{name}</strong> - {role}</li>'
+        roles_html += '</ul>'
+        return format_html(roles_html)
+    except (AttributeError, TypeError):
+        return format_html('<em>Invalid authors</em>')
+
+
+# ============================================================================
+# UTILITY FILTERS
+# ============================================================================
+
+@register.filter
+def pluralize_publications(count):
+    """
+    Pluralize 'publication' based on count
     
-    names = [a.user.username for a in author_list[:limit]]
-    remaining = len(author_list) - limit
-    return f"{', '.join(names)} and {remaining} more"
+    Usage: {{ publications.count|pluralize_publications }}
+    """
+    if count == 1:
+        return '1 publication'
+    return f'{count} publications'
 
 
 @register.filter
-def access_status_badge(publication, user):
+def format_file_size(size_bytes):
     """
-    Generate an access status badge based on publication and user.
+    Format file size in human-readable format
     
-    Usage: {{ publication|access_status_badge:user }}
+    Usage: {{ document.file.size|format_file_size }}
     """
-    if not user or user.is_anonymous:
-        return '<span class="badge bg-secondary"><i class="bi bi-lock"></i> Public Only</span>'
+    if not size_bytes:
+        return '0 B'
     
-    if publication.is_public:
-        return '<span class="badge bg-success"><i class="bi bi-globe"></i> Public</span>'
-    
-    if publication.uploader == user or publication.authors.filter(user=user).exists():
-        return '<span class="badge bg-primary"><i class="bi bi-person-check"></i> Owner</span>'
-    
-    # Check for active access grant
-    from django.utils import timezone
-    has_access = publication.grants.filter(
-        viewer=user,
-        access_granted=True,
-        expires_at__gt=timezone.now()
-    ).exists()
-    
-    if has_access:
-        return '<span class="badge bg-info"><i class="bi bi-check-circle"></i> Granted Access</span>'
-    
-    return '<span class="badge bg-danger"><i class="bi bi-lock"></i> No Access</span>'
+    try:
+        size_bytes = int(size_bytes)
+        for unit in ['B', 'KB', 'MB', 'GB']:
+            if size_bytes < 1024:
+                return f'{size_bytes:.1f} {unit}'
+            size_bytes /= 1024
+        return f'{size_bytes:.1f} TB'
+    except (ValueError, TypeError):
+        return 'Unknown'
 
 
 @register.filter
-def publication_status_display(publication):
+def is_recent(date_value, days=7):
     """
-    Display publication status as a formatted badge.
+    Check if date is within last N days
     
-    Usage: {{ publication|publication_status_display }}
+    Usage: {% if publication.publication_date|is_recent:14 %}Recently published{% endif %}
     """
-    status = []
-    
-    if publication.is_public:
-        status.append('<span class="badge bg-success"><i class="bi bi-globe"></i> Public</span>')
-    else:
-        status.append('<span class="badge bg-warning"><i class="bi bi-lock"></i> Private</span>')
-    
-    if publication.auto_approve_access:
-        status.append('<span class="badge bg-info"><i class="bi bi-check-circle"></i> Auto-Approve</span>')
-    
-    return " ".join(status)
-
-
-@register.filter
-def can_edit_publication(publication, user):
-    """
-    Check if user can edit the publication.
-    
-    Usage: {% if publication|can_edit_publication:user %}...{% endif %}
-    """
-    if not user or user.is_anonymous:
+    if not date_value:
         return False
     
-    return (
-        publication.uploader == user or
-        publication.authors.filter(user=user).exists() or
-        user.is_superuser
-    )
-
-
-@register.filter
-def can_grant_access(publication, user):
-    """
-    Check if user can grant access to the publication.
-    
-    Usage: {% if publication|can_grant_access:user %}...{% endif %}
-    """
-    if not user or user.is_anonymous:
+    try:
+        if isinstance(date_value, str):
+            date_value = datetime.strptime(date_value, '%Y-%m-%d').date()
+        delta = datetime.now().date() - date_value
+        return delta.days <= days
+    except (ValueError, AttributeError, TypeError):
         return False
-    
-    return (
-        publication.uploader == user or
-        publication.authors.filter(user=user).exists() or
-        user.is_superuser
-    )
 
 
 @register.filter
-def has_pdf(publication):
+def initials(full_name):
     """
-    Check if publication has a PDF attached.
+    Get initials from full name
     
-    Usage: {% if publication|has_pdf %}...{% endif %}
+    Usage: {{ user.get_full_name|initials }}
     """
-    return publication.full_pdf and publication.full_pdf.url
-
-
-@register.filter
-def user_contribution_role(authors_queryset, user):
-    """
-    Get the contribution role of a specific user in a publication.
+    if not full_name:
+        return '?'
     
-    Usage: {{ publication.authors.all|user_contribution_role:request.user }}
-    """
-    authorship = authors_queryset.filter(user=user).first()
-    if authorship:
-        return authorship.contribution_role
-    return "Unknown"
-
-
-@register.filter
-def truncate_chars_smart(text, max_chars=150):
-    """
-    Truncate text to max characters, breaking at word boundaries.
-    
-    Usage: {{ publication.title|truncate_chars_smart:100 }}
-    """
-    if not text or len(text) <= max_chars:
-        return text
-    
-    truncated = text[:max_chars].rsplit(' ', 1)[0]
-    return truncated + "..."
-
-
-@register.filter
-def days_ago(date_obj):
-    """
-    Calculate days between date and today.
-    
-    Usage: {{ publication.created_at|days_ago }}
-    """
-    if not date_obj:
-        return "Unknown"
-    
-    if isinstance(date_obj, str):
-        try:
-            date_obj = datetime.fromisoformat(date_obj.replace('Z', '+00:00'))
-        except:
-            return date_obj
-    
-    if isinstance(date_obj, datetime):
-        date_obj = date_obj.date()
-    
-    today = datetime.now().date()
-    delta = today - date_obj
-    
-    if delta.days == 0:
-        return "today"
-    elif delta.days == 1:
-        return "yesterday"
-    elif delta.days < 7:
-        return f"{delta.days} days ago"
-    elif delta.days < 30:
-        weeks = delta.days // 7
-        return f"{weeks} week{'s' if weeks > 1 else ''} ago"
-    elif delta.days < 365:
-        months = delta.days // 30
-        return f"{months} month{'s' if months > 1 else ''} ago"
-    else:
-        years = delta.days // 365
-        return f"{years} year{'s' if years > 1 else ''} ago"
-
-
-@register.simple_tag
-def user_publication_count(user):
-    """
-    Get the total publication count for a user.
-    
-    Usage: {% user_publication_count user %}
-    """
-    from research_repo.models import Publication
-    return Publication.objects.filter(uploader=user).count()
-
-
-@register.simple_tag
-def user_coauthorship_count(user):
-    """
-    Get the total co-authorship count for a user.
-    
-    Usage: {% user_coauthorship_count user %}
-    """
-    from research_repo.models import Authorship
-    return Authorship.objects.filter(user=user).count()
-
-
-@register.inclusion_tag('research_repo/tags/publication_card.html')
-def publication_card(publication, user=None):
-    """
-    Render a publication card component.
-    
-    Usage: {% publication_card publication user %}
-    """
-    can_edit = False
-    can_grant = False
-    
-    if user and not user.is_anonymous:
-        can_edit = (
-            publication.uploader == user or
-            publication.authors.filter(user=user).exists()
-        )
-        can_grant = can_edit
-    
-    return {
-        'publication': publication,
-        'user': user,
-        'can_edit': can_edit,
-        'can_grant': can_grant,
-    }
-
-
-# Safeguard for safe HTML rendering
-register.filter('access_status_badge', access_status_badge)
-register.filter('publication_status_display', publication_status_display)
+    names = full_name.strip().split()
+    if len(names) == 1:
+        return names[0][0].upper()
+    return (names[0][0] + names[-1][0]).upper()

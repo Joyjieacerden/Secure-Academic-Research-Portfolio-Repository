@@ -107,6 +107,28 @@
                             Upload your publication as a PDF file. Max 50MB.
                         </small>
                     </div>
+
+                    <!-- Publication Date -->
+                    <div class="mb-4">
+                        <label for="{{ form.publication_date.id_for_label }}" class="form-label">
+                            <i class="bi bi-calendar-event"></i> Publication Date
+                        </label>
+                        <input 
+                            type="date" 
+                            class="form-control form-control-lg {% if form.publication_date.errors %}is-invalid{% endif %}"
+                            id="{{ form.publication_date.id_for_label }}"
+                            name="{{ form.publication_date.html_name }}"
+                            value="{{ form.publication_date.value|date:'Y-m-d'|default:'' }}"
+                        >
+                        {% if form.publication_date.errors %}
+                        <div class="invalid-feedback d-block">
+                            <i class="bi bi-exclamation-circle"></i> {{ form.publication_date.errors.0 }}
+                        </div>
+                        {% endif %}
+                        <small class="form-text text-muted">
+                            The date this research was published or presented.
+                        </small>
+                    </div>
                 </div>
             </div>
 

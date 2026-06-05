@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+
+{% block title %}Request Publication Access - ScholarVault{% endblock %}
+
+{% block content %}
+<!-- Modal for Access Request -->
+<div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 20px;">
+    <div style="background: white; border-radius: 12px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3); max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative;">
+        
+        <!-- Modal Header -->
+        <div style="background: linear-gradient(135deg, #8B0000 0%, #6B0000 100%); color: white; padding: 2rem; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10;">
+            <h2 style="margin: 0; font-size: 1.5rem;">
+                <i class="bi bi-hand-thumbs-up"></i> Request Access
+            </h2>
+            <button onclick="closeModal()" style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; padding: 0; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div style="padding: 2rem;">
+            
+            <!-- Publication Info -->
+            <div style="background: #f8f9fa; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem; border-left: 4px solid #8B0000;">
+                <h5 style="margin: 0 0 0.5rem 0; color: #333;">{{ publication.title }}</h5>
+                <p style="margin: 0.25rem 0; color: #666; font-size: 0.9rem;">
+                    <i class="bi bi-person-circle"></i> By <strong>{{ publication.uploader.username }}</strong>
+                </p>
+                <p style="margin: 0.25rem 0; color: #666; font-size: 0.9rem;">
+                    <i class="bi bi-calendar"></i> 
+                    {% if publication.created_at %}
+                        Published {{ publication.created_at|date:"M d, Y" }}
+                    {% else %}
+                        Recently published
+                    {% endif %}
+                </p>
+            </div>
+
+            <!-- Access Request Form -->
+            <form method="post" action="{% url 'access_grant_create' publication.id %}" id="access-request-form">
+                {% csrf_token %}
+
+                <!-- Duration Selection -->
+                <div style="margin-bottom: 1.5rem;">
+                    <label for="duration" style="display: block; margin-bottom: 0.75rem; font-weight: 600; color: #333;">
+                        <i class="bi bi-hourglass-split"></i> How long do you need access?
+                    </label>
+                    <select id="duration" name="duration" style="width: 100%; padding: 0.75rem; border: 1.5px solid #e0e0e0; border-radius: 6px; font-size: 1rem; background: white; cursor: pointer; transition: all 0.2s ease;" required>
+                        <option value="" disabled selected>-- Select duration --</option>
+                        <option value="7">7 Days</option>
+                        <option value="30">30 Days (Recommended)</option>
+                        <option value="90">90 Days</option>
+                        <option value="365">1 Year</option>
+                        <option value="custom">Custom Duration</option>
+                    </select>
+                    <small style="display: block; margin-top: 0.5rem; color: #999;">
+                        Access will expire after the selected duration. You can request an extension anytime.
+                    </small>
+                </div>
+
+                <!-- Custom Duration Input (hidden by default) -->
+                <div id="custom-duration-container" style="display: none; margin-bottom: 1.5rem;">
+                    <label for="custom-days" style="display: block; margin-bottom: 0.75rem; font-weight: 600; color: #333;">
+                        <i class="bi bi-calculator"></i> Number of days
+                    </label>
+                    <input type="number" id="custom-days" name="custom_days" min="1" max="365" placeholder="Enter number of days (1-365)" style="width: 100%; padding: 0.75rem; border: 1.5px solid #e0e0e0; border-radius: 6px; font-size: 1rem;">
+                    <small style="display: block; margin-top: 0.5rem; color: #999;">
+                        Enter a value between 1 and 365 days.
+                    </small>
+                </div>
+
+                <!-- Request Message -->
+                <div style="margin-bottom: 1.5rem;">
+                    <label for="message" style="display: block; margin-bottom: 0.75rem; font-weight: 600; color: #333;">
+                        <i class="bi bi-chat-dots"></i> Request Message (Optional)
+                    </label>
+                    <textarea id="message" name="message" rows="5" placeholder="Explain why you need access to this publication... (max 500 characters)" style="width: 100%; padding: 0.75rem; border: 1.5px solid #e0e0e0; border-radius: 6px; font-size: 1rem; font-family: inherit; resize: vertical; transition: all 0.2s ease;" maxlength="500" onkeyup="updateCharCount()"></textarea>
+                    <div style="display: flex; justify-content: space-between; margin-top: 0.5rem;">
+                        <small style="color: #999;">
+                            <i class="bi bi-info-circle"></i> Help the author understand your research interest
+                        </small>
+                        <small id="char-count" style="color: #999;">0/500</small>
+                    </div>
+                </div>
+
+                <!-- Agreement Checkbox -->
+                <div style="background: #f0f7ff; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; border-left: 4px solid #29b6f6;">
+                    <label style="display: flex; align-items: flex-start; gap: 0.75rem; cursor: pointer; margin: 0;">
+                        <input type="checkbox" id="agree-terms" name="agree_terms" required style="margin-top: 0.25rem; cursor: pointer; accent-color: #8B0000;">
+                        <span style="font-size: 0.9rem; color: #555;">
+                            I understand that this access is granted by the author and is subject to their terms. I will use this publication only for academic research purposes and will respect the author's intellectual property rights.
+                        </span>
+                    </label>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" style="width: 100%; padding: 0.875rem; background: linear-gradient(135deg, #8B0000 0%, #6B0000 100%); color: white; border: none; border-radius: 6px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                    <i class="bi bi-send"></i> Send Access Request
+                </button>
+
+                <!-- Cancel Button -->
+                <button type="button" onclick="closeModal()" style="width: 100%; padding: 0.875rem; margin-top: 0.75rem; background: white; color: #8B0000; border: 2px solid #8B0000; border-radius: 6px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.3s ease;">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </button>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Duration dropdown change handler
+        const durationSelect = document.getElementById('duration');
+        const customDurationContainer = document.getElementById('custom-duration-container');
+        
+        durationSelect.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                customDurationContainer.style.display = 'block';
+                document.getElementById('custom-days').focus();
+            } else {
+                customDurationContainer.style.display = 'none';
+                document.getElementById('custom-days').value = '';
+            }
+        });
+
+        // Form submission
+        document.getElementById('access-request-form').addEventListener('submit', function(e) {
+            const agreeCheckbox = document.getElementById('agree-terms');
+            if (!agreeCheckbox.checked) {
+                e.preventDefault();
+                alert('Please agree to the terms before sending the request.');
+                return false;
+            }
+
+            const duration = document.getElementById('duration').value;
+            if (duration === 'custom') {
+                const customDays = document.getElementById('custom-days').value;
+                if (!customDays || parseInt(customDays) < 1 || parseInt(customDays) > 365) {
+                    e.preventDefault();
+                    alert('Please enter a valid number of days (1-365).');
+                    return false;
+                }
+                // Store custom duration in a hidden input
+                let hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'duration_days';
+                hiddenInput.value = customDays;
+                this.appendChild(hiddenInput);
+            } else {
+                // Store selected duration in a hidden input
+                let hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'duration_days';
+                hiddenInput.value = duration;
+                this.appendChild(hiddenInput);
+            }
+        });
+
+        // Click outside modal to close (optional)
+        document.addEventListener('click', function(e) {
+            if (e.target.style.background && e.target.style.background.includes('rgba(0, 0, 0, 0.5)')) {
+                closeModal();
+            }
+        });
+    });
+
+    function updateCharCount() {
+        const message = document.getElementById('message');
+        document.getElementById('char-count').textContent = message.value.length + '/500';
+    }
+
+    function closeModal() {
+        // Go back to previous page or publication detail
+        window.history.back();
+    }
+</script>
+
+<style>
+    select:focus, textarea:focus {
+        border-color: #8B0000 !important;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(139, 0, 0, 0.1);
+    }
+
+    button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(139, 0, 0, 0.2);
+    }
+
+    input[type="checkbox"]:hover {
+        transform: scale(1.1);
+    }
+</style>
+{% endblock %}
