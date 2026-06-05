@@ -133,16 +133,28 @@ REST_FRAMEWORK = {
 WSGI_APPLICATION = 'config.wsgi.application'
 
 
-# Database
+# Database Configuration
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+if os.getenv('DATABASE_URL'):
+    # Production: Use Render's PostgreSQL database
+    DATABASES = {
+        'default': dj_database_url.config(
+            conn_max_age=600,
+            conn_health_checks=True,
+            ssl_require=True
+        )
     }
-}
-
+else:
+    # Local Development: Fall back to SQLite automatically
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+    
+    
 # ---------------------------------------------------------------------------
 # AUTHENTICATION
 # ---------------------------------------------------------------------------
