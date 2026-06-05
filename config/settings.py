@@ -78,6 +78,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # FIXED: Added AxesMiddleware at the end to catch all incoming authentication requests safely
+    'axes.middleware.AxesMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -130,8 +132,6 @@ DATABASES = {
 # AUTHENTICATION
 # ---------------------------------------------------------------------------
 
-AUTH_USER_MODEL = 'research_repo.User'
-
 AUTHENTICATION_BACKENDS = [
     'axes.backends.AxesStandaloneBackend',  # Task 1 – axes must be first
     'django.contrib.auth.backends.ModelBackend',
@@ -178,7 +178,7 @@ AXES_NEVER_LOCKOUT_WHITELIST = False
 # TASK 2 — HONEYPOT (django-honeypot)
 # ---------------------------------------------------------------------------
 
-HONEYPOT_FIELD_NAME = 'phone_number'     # hidden field name bots fill in
+HONEYPOT_FIELD_NAME = 'website'     # hidden field name bots fill in
 HONEYPOT_VALUE = ''                      # expected value is empty
 
 # ---------------------------------------------------------------------------
@@ -361,5 +361,5 @@ CLOUDINARY_STORAGE = {
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 
-
-AUTH_USER_MODEL = 'research_repo.User'
+# FIXED: Suppress models.W042 by choosing BigAutoField as the modern standard primary key
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

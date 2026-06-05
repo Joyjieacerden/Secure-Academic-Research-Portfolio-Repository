@@ -25,6 +25,12 @@
                 <form method="post" novalidate>
                     {% csrf_token %}
 
+
+                    <div style="display: none;" aria-hidden="true">
+                        <label for="id_website">Website:</label>
+                        <input type="text" name="website" id="id_website" autocomplete="off" tabindex="-1">
+                    </div>
+
                     <!-- Username Field -->
                     <div class="mb-4">
                         <label for="{{ form.username.id_for_label }}" class="form-label">

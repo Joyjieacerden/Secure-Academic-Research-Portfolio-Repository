@@ -25,15 +25,22 @@
                     {% csrf_token %}
 
                    
+                    <div style="display: none;" aria-hidden="true">
+                     <label for="id_website">Website:</label>
+                    <input type="text" name="website" id="id_website" autocomplete="off" tabindex="-1">
+                    </div>
+                    
+
                     <div class="mb-4">
                         <label for="id_email" class="form-label">
                             <i class="bi bi-envelope"></i> Username
                         </label>
                         <input 
+                        
                             type="email" 
                             class="form-control form-control-lg"
-                            id="id_email"
-                            name="username"
+                             id="id_email"
+                             name="username"
                             placeholder="Enter Your Username"
                             required
                         >

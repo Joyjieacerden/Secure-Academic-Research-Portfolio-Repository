@@ -16,10 +16,7 @@ from django.db.models import Q
 from .forms import PublicationForm, AuthorshipFormSet, SignUpForm, LoginForm, UploadDocumentForm,AccessGrantForm
 
 
-<<<<<<< HEAD
 @method_decorator(check_honeypot, name='dispatch')
-=======
->>>>>>> f35064d4ccdf62a63e016619bcb7a4235aeacb3a
 @method_decorator(ratelimit(key='ip', rate='10/m', method='POST', block=True), name='dispatch')
 
 class LoginView(LoginView):
@@ -31,16 +28,10 @@ class LoginView(LoginView):
         return Publication.objects.filter(is_public=True)
 
 class LogoutView(LoginRequiredMixin, LogoutView):
-<<<<<<< HEAD
     next_page = reverse_lazy('login')
     
     
 @method_decorator(check_honeypot, name='dispatch')
-=======
-    next_page = reverse_lazy('discovery')
-    
-    
->>>>>>> f35064d4ccdf62a63e016619bcb7a4235aeacb3a
 @method_decorator(ratelimit(key='ip', rate='5/h', method='POST', block=True), name='dispatch')
 class SignUpView(CreateView):
     model = User
