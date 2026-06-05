@@ -6,6 +6,7 @@ from rest_framework import status, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.throttling import UserRateThrottle
 from .serializers import LoginSerializer, LogoutSerializer, PublicationSerializer
@@ -50,25 +51,21 @@ class PublicationViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly]
     page_size = 10
     throttle_classes = [UserRateThrottle]
+    authentication_classes = [SessionAuthentication,BasicAuthentication]
+    
     def _get_secure_queryset(self, user):
-        """
-        Helper method to securely isolate visible publications using Q objects.
-        Optimized with select_related and prefetch_related to avoid N+1 queries.
-        """
-        base_queryset = Publication.objects.select_related('uploader').prefetch_related('authors__user')
+        base_queryset = Publication.objects.select_related(
+            'uploader'
+        ).prefetch_related(
+            'authors__user'
+        )
 
+        # Guests only see public publications
         if not user or user.is_anonymous:
             return base_queryset.filter(is_public=True)
-            
-        if user.is_superuser:
-            return base_queryset.all()
-            
-        return base_queryset.filter(
-            Q(is_public=True) |
-            Q(uploader=user) |
-            Q(authors__user=user) |
-            Q(grants__viewer=user, grants__access_granted=True, grants__expires_at__gt=timezone.now())
-        ).distinct()
+
+        # Any authenticated user can see publication metadata
+        return base_queryset.all()
 
     def list(self, request):
         """GET /publications/"""

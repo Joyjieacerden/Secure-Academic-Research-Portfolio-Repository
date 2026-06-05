@@ -118,48 +118,40 @@ class AuthorshipSerializer(serializers.ModelSerializer):
 class PublicationSerializer(serializers.ModelSerializer):
     authors = AuthorshipSerializer(many=True, read_only=True)
     uploader_username = serializers.CharField(source='uploader.username', read_only=True)
+    
+    # 1. Renamed to match the exact key you want in your API response
+    pdf_url = serializers.SerializerMethodField() 
 
     class Meta:
         model = Publication
         fields = [
-            'id', 'title', 'abstract', 'full_pdf_url', 
+            'id', 'title', 'abstract', 
+            'pdf_url',  # 2. This replaces 'full_pdf' so the raw path is completely hidden!
             'is_public', 'auto_approve_access', 'uploader', 
             'uploader_username', 'authors'
         ]
         read_only_fields = ['uploader']
 
-    def __init__(self, *args, **kwargs):
-        context = kwargs.get('context', {})
-        request = context.get('request', None)
-        
-        super().__init__(*args, **kwargs)
+    # 3. Renamed to match the 'pdf_url' field property
+    def get_pdf_url(self, obj): 
+        request = self.context.get('request', None)
+        if not request:
+            return None
 
-        # Apply Column-Level Security Logic
-        if request:
-            user = request.user
-            
-            # Identify if we are inspecting a single object instance vs a list/queryset
-            if self.instance and not isinstance(self.instance, (list, tuple, tuple.__class__)):
-                publications = [self.instance]
-            else:
-                publications = []
+        user = request.user
 
-            # Determine Premium / Reviewer status using built-in Django Group memberships
-            is_premium_or_reviewer = False
-            if user and user.is_authenticated:
-                is_premium_or_reviewer = (
-                    user.is_superuser or 
-                    user.is_faculty or 
-                    user.groups.filter(name__in=['Reviewers', 'Premium Engines']).exists()
-                )
+        # Condition 1: If the publication/PDF is public, show it to everyone
+        if obj.is_public:
+            return obj.full_pdf.url if obj.full_pdf else None
 
-            # If the consumer is basic or unauthenticated, audit column protection
-            if not is_premium_or_reviewer:
-                # If a specific publication is being analyzed, honor custom AccessGrant/Owner methods
-                if publications and user and user.is_authenticated:
-                    pub = publications[0]
-                    if user.has_access_to(pub):
-                        return  # Granted! Do not pop the field.
+        # Condition 2: If private, ONLY show it if the user is a superuser or faculty
+        if user and user.is_authenticated:
+            if user.is_superuser or user.is_faculty:
+                return obj.full_pdf.url if obj.full_pdf else None
 
-                # Redact PDF link entirely for standard engines/public users
-                self.fields.pop('full_pdf_url', None)
+            # Condition 3: Keep your custom explicit table grants / object ownership check
+            if user.has_access_to(obj):
+                return obj.full_pdf.url if obj.full_pdf else None
+
+        # If it's private and they aren't superuser, faculty, or granted access, hide it completely
+        return None
