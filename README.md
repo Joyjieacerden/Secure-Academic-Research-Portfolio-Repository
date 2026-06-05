@@ -4,7 +4,8 @@ An enterprise-grade, secure digital portfolio generator and research repository 
 
 ---
 ### 🔗 Project Links
-[![GitHub Repository]
+[![GitHub Repository] https://github.com/Joyjieacerden/Secure-Academic-Research-Portfolio-Repository.git
+---
 [![Live on Render] https://secure-academic-research-portfolio.onrender.com
 
 ## 👥 Professional Team Roles & Accountability Ledger
