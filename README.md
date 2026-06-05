@@ -71,6 +71,19 @@ Every team member is graded individually during the face-to-face defense based o
 
 ---
 
+### 🛠️ Project Tech Stack & Dependency Mapping
+
+The following production dependencies are managed within the enterprise architecture to support security, data integrity, and deployment workflows:
+
+* **Core Framework & WSGI:** `Django==5.1.6`, `asgiref==3.11.1`, `gunicorn==26.0.0`
+* **Database & Storage:** `psycopg2-binary==2.9.12`, `dj-database-url==3.1.2`, `cloudinary==1.44.2`, `django-cloudinary-storage==0.3.0`
+* **API & Authentication:** `djangorestframework==3.17.1`, `djangorestframework_simplejwt==5.5.1`, `PyJWT==2.13.0`, `Authlib==1.7.2`
+* **Application Hardening & Security:** `django-axes==8.3.1`, `django-honeypot==1.3.0`, `django-csp==4.0`, `django-permissions-policy==4.30.0`, `django-ratelimit==4.1.0`
+* **Vulnerability Auditing & Compliance:** `pip_audit==2.9.0`, `safety==3.5.1`, `bandit==1.8.3`
+* **Environment & Assets:** `python-dotenv==1.2.2`, `django-environ==0.13.0`, `whitenoise==6.12.0`
+* **Data Validation & Parsing:** `pydantic==2.9.2`, `annotated-types==0.7.0`, `marshmallow==4.3.0`
+* **Utilities & Utilities:** `pillow==12.2.0`, `fpdf2==2.8.7`, `nltk==3.9.4`, `sqlparse==0.5.5`
+
 ## 🗂️ Project Directory Layout
 
 ```text
