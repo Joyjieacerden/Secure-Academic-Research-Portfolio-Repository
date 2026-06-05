@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block title %}Grant Access - ScholarVault{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center my-5">
+    <div class="col-lg-6">
+        <div class="card shadow-lg">
+            <div class="card-header text-center py-4">
+                <i class="bi bi-hand-index-thumb" style="font-size: 2.5rem; color: white;"></i>
+                <h2 class="mt-3 mb-0">Grant Access to Publication</h2>
+                <p class="text-white-50 small mt-2">Manage who can view your research</p>
+            </div>
+            <div class="card-body p-5">
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-circle"></i>
+                    {% for error in form.non_field_errors %}
+                        <p class="mb-0">{{ error }}</p>
+                    {% endfor %}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endif %}
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    <!-- Publication Info (Read-only) -->
+                    <div class="mb-4">
+                        <label class="form-label">
+                            <i class="bi bi-file-earmark"></i> Publication
+                        </label>
+                        <div class="alert alert-light border">
+                            {% if form.instance.publication %}
+                            <p class="mb-0">
+                                <strong>{{ form.instance.publication.title }}</strong>
+                                {% if form.instance.publication.is_public %}
+                                <span class="badge bg-success ms-2">Public</span>
+                                {% else %}
+                                <span class="badge bg-warning ms-2">Private</span>
+                                {% endif %}
+                            </p>
+                            {% else %}
+                            <p class="mb-0 text-muted">
+                                <i class="bi bi-info-circle"></i> Select a publication below
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Viewer Selection -->
+                    <div class="mb-4">
+                        <label for="{{ form.viewer.id_for_label }}" class="form-label">
+                            <i class="bi bi-person"></i> Select User to Grant Access
+                            <span class="text-danger">*</span>
+                        </label>
+                        <select 
+                            class="form-select form-select-lg {% if form.viewer.errors %}is-invalid{% endif %}"
+                            id="{{ form.viewer.id_for_label }}"
+                            name="{{ form.viewer.html_name }}"
+                            required
+                        >
+                            <option value="">-- Choose a user --</option>
+                            {% for user_option in form.viewer.field.queryset %}
+                            <option value="{{ user_option.id }}" {% if form.viewer.value == user_option.id|stringformat:"s" %}selected{% endif %}>
+                                {{ user_option.username }} ({{ user_option.email }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                        {% if form.viewer.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.viewer.errors %}
+                                <i class="bi bi-info-circle"></i> {{ error }}<br>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Access Granted Checkbox -->
+                    <div class="mb-4">
+                        <div class="form-check form-switch">
+                            <input 
+                                type="checkbox" 
+                                class="form-check-input" 
+                                id="{{ form.access_granted.id_for_label }}"
+                                name="{{ form.access_granted.html_name }}"
+                                {% if form.access_granted.value %}checked{% endif %}
+                            >
+                            <label class="form-check-label" for="{{ form.access_granted.id_for_label }}">
+                                <i class="bi bi-check-circle"></i> Grant Access
+                            </label>
+                        </div>
+                        <small class="form-text d-block mt-2">
+                            Check to allow this user to view the publication
+                        </small>
+                    </div>
+
+                    <!-- Expiration Date -->
+                    <div class="mb-4">
+                        <label for="{{ form.expires_at.id_for_label }}" class="form-label">
+                            <i class="bi bi-calendar"></i> Access Expiration
+                            <span class="text-danger">*</span>
+                        </label>
+                        <input 
+                            type="datetime-local" 
+                            class="form-control form-control-lg {% if form.expires_at.errors %}is-invalid{% endif %}"
+                            id="{{ form.expires_at.id_for_label }}"
+                            name="{{ form.expires_at.html_name }}"
+                            value="{% if form.expires_at.value %}{{ form.expires_at.value }}{% endif %}"
+                            required
+                        >
+                        {% if form.expires_at.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.expires_at.errors %}
+                                <i class="bi bi-info-circle"></i> {{ error }}<br>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        <small class="form-text">
+                            The date and time when access will automatically expire
+                        </small>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <hr class="my-4">
+                    <div class="d-grid gap-2 gap-sm-3 d-sm-flex">
+                        <button type="submit" class="btn btn-primary btn-lg order-sm-2">
+                            <i class="bi bi-check-circle"></i> Grant Access
+                        </button>
+                        <a href="{% url 'publication_list' %}" class="btn btn-outline-secondary btn-lg order-sm-1">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Info Box -->
+        <div class="alert alert-info mt-4" role="alert">
+            <h6 class="alert-heading">
+                <i class="bi bi-info-circle"></i> Access Control Information
+            </h6>
+            <ul class="small mb-0">
+                <li>Selected users will receive notification of access granted</li>
+                <li>Access automatically expires at the specified date/time</li>
+                <li>You can revoke access at any time by editing or deleting the grant</li>
+                <li>Default expiration is 30 days from creation</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

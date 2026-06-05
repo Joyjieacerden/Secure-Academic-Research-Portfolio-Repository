@@ -16,7 +16,10 @@ from django.db.models import Q
 from .forms import PublicationForm, AuthorshipFormSet, SignUpForm, LoginForm, UploadDocumentForm,AccessGrantForm
 
 
+<<<<<<< HEAD
 @method_decorator(check_honeypot, name='dispatch')
+=======
+>>>>>>> f35064d4ccdf62a63e016619bcb7a4235aeacb3a
 @method_decorator(ratelimit(key='ip', rate='10/m', method='POST', block=True), name='dispatch')
 
 class LoginView(LoginView):
@@ -28,10 +31,16 @@ class LoginView(LoginView):
         return Publication.objects.filter(is_public=True)
 
 class LogoutView(LoginRequiredMixin, LogoutView):
+<<<<<<< HEAD
     next_page = reverse_lazy('login')
     
     
 @method_decorator(check_honeypot, name='dispatch')
+=======
+    next_page = reverse_lazy('discovery')
+    
+    
+>>>>>>> f35064d4ccdf62a63e016619bcb7a4235aeacb3a
 @method_decorator(ratelimit(key='ip', rate='5/h', method='POST', block=True), name='dispatch')
 class SignUpView(CreateView):
     model = User
@@ -40,27 +49,14 @@ class SignUpView(CreateView):
     success_url = reverse_lazy('login')
 
     def form_valid(self, form):
-        # 1. Save the user, but don't mark them as active/verified yet
+        # 1. Save the user
         user = form.save(commit=False)
-        user.is_active = False # They cannot log in until verified
-        user.email_verification_token = get_random_string(64)
+        user.is_active = True  # Allow login immediately for testing
+        user.is_email_verified = True  # Mark as verified for testing
         user.save()
-
-        # 2. Send the verification email
-        verification_link = self.request.build_absolute_uri(
-            reverse('verify_email', kwargs={'token': user.email_verification_token})
-        )
         
-        send_mail(
-            'Verify your ScholarVault Account',
-            f'Hi {user.username}, please click the link below to verify your account:\n{verification_link}',
-            settings.DEFAULT_FROM_EMAIL,
-            [user.email],
-            fail_silently=False,
-        )
-        
-        # 3. Inform the user to check their email
-        return HttpResponse("Registration successful! Please check your email to verify your account.")
+        # Redirect to login page
+        return redirect('login')
 
 class VerifyEmailView(View):
     def get(self, request, token, *args, **kwargs):
@@ -173,7 +169,7 @@ class PublicationCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView)
 class PublicationUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Publication
     form_class = PublicationForm
-    template_name = 'publication_form.html'
+    template_name = 'research_repo/publication_form.html'
     success_url = reverse_lazy('publication_list')
 
     def test_func(self):
@@ -228,7 +224,7 @@ class UploadDocumentView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
 class AccessGrantCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     model = AccessGrant
     form_class = AccessGrantForm
-    template_name = 'access_grant_form.html'
+    template_name = 'research_repo/access_grant_form.html'
     success_url = reverse_lazy('publication_list')
 
     def get_publication(self):
@@ -253,8 +249,10 @@ class AccessGrantCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView)
         return super().form_valid(form)
     
 class SettingsView(LoginRequiredMixin, TemplateView):
-    template_name = 'settings.html'
+    template_name = 'research_repo/settings.html'
 
+class ProfileView(LoginRequiredMixin, TemplateView):
+    template_name = 'research_repo/profile.html'
 
 class DashboardView(LoginRequiredMixin, DetailView):
     model = Publication
@@ -264,7 +262,7 @@ class DashboardView(LoginRequiredMixin, DetailView):
 class DiscoveryView(TemplateView):
     template_name = 'research_repo/discovery.html'
 
-    def get(self, request, *args, **kwargs):
-        # HARD DIAGNOSTIC: Does this reach the view?
-        print("DiscoveryView reached!") 
-        return super().get(request, *args, **kwargs)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['public_publications'] = Publication.objects.filter(is_public=True).select_related('uploader').prefetch_related('authors')
+        return context

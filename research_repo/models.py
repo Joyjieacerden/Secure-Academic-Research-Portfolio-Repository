@@ -34,6 +34,7 @@ class Publication(models.Model):
     title = models.CharField(max_length=255)
     abstract = models.TextField()
     full_pdf = models.FileField(upload_to='publications/', storage=MediaCloudinaryStorage(), blank=True, null=True)
+    publication_date = models.DateField(null=True, blank=True, help_text="The date this research was published or presented")
         
     is_public = models.BooleanField(default=False)
     auto_approve_access = models.BooleanField(default=False)

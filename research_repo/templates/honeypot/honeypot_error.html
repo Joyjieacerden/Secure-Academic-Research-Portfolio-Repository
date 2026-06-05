@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}Access Denied - ScholarVault{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center my-5">
+    <div class="col-lg-6 text-center">
+        <div class="mb-4">
+            <i class="bi bi-exclamation-triangle-fill" style="font-size: 5rem; color: #8B0000;"></i>
+        </div>
+        <h1 class="display-5 mb-3">Access Denied</h1>
+        <p class="lead text-muted mb-4">
+            Your request could not be processed. Please try again.
+        </p>
+        <div class="d-flex gap-2 justify-content-center">
+            <a href="{% url 'publication_list' %}" class="btn btn-primary">
+                <i class="bi bi-arrow-left"></i> Back
+            </a>
+            <a href="{% url 'login' %}" class="btn btn-outline-primary">
+                <i class="bi bi-box-arrow-in-right"></i> Login
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

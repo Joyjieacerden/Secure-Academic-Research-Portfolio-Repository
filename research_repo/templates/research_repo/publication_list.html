@@ -1,0 +1,1128 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}Browse Publications - ScholarVault{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary: #8B0000;
+        --primary-dark: #6B0000;
+        --primary-light: #A52A2A;
+        --secondary: #f8f9fa;
+        --text-dark: #2c3e50;
+        --text-light: #95a5a6;
+        --border: #e8eef2;
+        --success: #27ae60;
+        --warning: #f39c12;
+    }
+    
+    body {
+        width: 100%;
+        overflow-x: hidden;
+        margin: 0;
+        padding: 0;
+    }
+    
+    html {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    .page-wrapper {
+        display: flex;
+        flex-direction: row;
+        min-height: calc(100vh - 60px);
+        width: 100%;
+        background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+    }
+    
+    /* Sidebar */
+    .sidebar {
+        background: white;
+        border-right: 1px solid var(--border);
+        padding: 2rem 0;
+        position: relative;
+        width: 260px;
+        height: auto;
+        min-height: calc(100vh - 60px);
+        overflow-y: auto;
+        z-index: 900;
+        box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+        flex-shrink: 0;
+    }
+    
+    .sidebar::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .sidebar::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+    
+    .sidebar::-webkit-scrollbar-thumb {
+        background: var(--primary);
+        border-radius: 3px;
+    }
+    
+    .sidebar .menu-label {
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        color: #aaa;
+        padding: 1rem 1.5rem 0.5rem;
+        margin: 1.5rem 0 0.75rem 0;
+        letter-spacing: 0.8px;
+    }
+    
+    .sidebar .menu-item {
+        display: flex;
+        align-items: center;
+        gap: 0.875rem;
+        padding: 0.875rem 1.5rem;
+        color: var(--text-light);
+        text-decoration: none;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        border-left: 3px solid transparent;
+        position: relative;
+    }
+    
+    .sidebar .menu-item i {
+        font-size: 1.2rem;
+        transition: transform 0.25s ease;
+    }
+    
+    .sidebar .menu-item:hover {
+        background-color: rgba(139, 0, 0, 0.05);
+        color: var(--primary);
+        border-left-color: var(--primary);
+        padding-left: 1.75rem;
+    }
+    
+    .sidebar .menu-item:hover i {
+        transform: translateX(4px);
+    }
+    
+    .sidebar .menu-item.active {
+        background-color: rgba(139, 0, 0, 0.08);
+        color: var(--primary);
+        border-left-color: var(--primary);
+        font-weight: 600;
+    }
+    
+    /* Main Content */
+    .main-content {
+        flex: 1;
+        padding: 2rem 2.5rem;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+    
+    .content-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 2.5rem;
+        gap: 1.5rem;
+    }
+    
+    .content-header h2 {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--text-dark);
+        margin: 0;
+    }
+    
+    .content-header p {
+        color: var(--text-light);
+        margin: 0.5rem 0 0 0;
+        font-size: 0.95rem;
+    }
+    
+    .btn-primary-action {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        color: white;
+        padding: 0.875rem 1.75rem;
+        border-radius: 8px;
+        border: none;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(139, 0, 0, 0.2);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-primary-action:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(139, 0, 0, 0.3);
+    }
+    
+    .btn-primary-action:active {
+        transform: translateY(-1px);
+    }
+    
+    /* Alert Banner */
+    .alert-banner {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        border-left: 5px solid var(--success);
+        padding: 1.25rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 8px rgba(39, 174, 96, 0.1);
+    }
+    
+    .alert-banner p {
+        margin: 0;
+        color: #1e5631;
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+    
+    .alert-close {
+        background: none;
+        border: none;
+        color: #1e5631;
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        padding: 0;
+    }
+    
+    .alert-close:hover {
+        transform: scale(1.2);
+    }
+    
+    /* Stats Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.75rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        border-top: 4px solid;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card.purple {
+        border-top-color: var(--primary);
+    }
+    
+    .stat-card.pink {
+        border-top-color: #ec407a;
+    }
+    
+    .stat-card.cyan {
+        border-top-color: #29b6f6;
+    }
+    
+    .stat-card.green {
+        border-top-color: var(--success);
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+    }
+    
+    .stat-label {
+        font-size: 0.8rem;
+        color: var(--text-light);
+        font-weight: 700;
+        text-transform: uppercase;
+        margin-bottom: 0.75rem;
+        letter-spacing: 0.6px;
+    }
+    
+    .stat-number {
+        font-size: 2.75rem;
+        font-weight: 800;
+        color: var(--text-dark);
+        margin-bottom: 0.5rem;
+        line-height: 1;
+    }
+    
+    .stat-change {
+        font-size: 0.85rem;
+        color: var(--text-light);
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .stat-icon {
+        position: absolute;
+        right: 1.5rem;
+        top: 1.5rem;
+        font-size: 2.25rem;
+        opacity: 0;
+        display: none;
+    }
+    
+    /* Main Section */
+    .main-section {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        margin-bottom: 2rem;
+        overflow: hidden;
+    }
+    
+    .section-header {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        color: white;
+        padding: 1.75rem;
+        font-weight: 700;
+        font-size: 1.15rem;
+        display: flex;
+        align-items: center;
+        gap: 0.875rem;
+    }
+    
+    .section-content {
+        padding: 2rem;
+    }
+    
+    /* Table */
+    .publications-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .publications-table thead tr {
+        border-bottom: 2px solid var(--border);
+    }
+    
+    .publications-table th {
+        text-align: left;
+        padding: 1.25rem;
+        font-weight: 700;
+        color: var(--text-light);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        background-color: #f8f9fa;
+    }
+    
+    .publications-table td {
+        padding: 1.25rem;
+        border-bottom: 1px solid var(--border);
+    }
+    
+    .publications-table tbody tr {
+        transition: all 0.2s ease;
+    }
+    
+    .publications-table tbody tr:hover {
+        background-color: #fafbfc;
+    }
+    
+    .pub-title {
+        font-weight: 700;
+        color: var(--text-dark);
+        cursor: pointer;
+        transition: color 0.2s ease;
+    }
+    
+    .pub-title:hover {
+        color: var(--primary);
+    }
+    
+    .pub-subtitle {
+        font-size: 0.85rem;
+        color: var(--text-light);
+        margin-top: 0.25rem;
+    }
+    
+    .badge {
+        display: inline-block;
+        padding: 0.5rem 0.875rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+    }
+    
+    .badge-published {
+        background-color: #d4edda;
+        color: #1e5631;
+    }
+    
+    .badge-draft {
+        background-color: #fff3e0;
+        color: #e65100;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+    
+    .action-btn {
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        border: 1.5px solid var(--border);
+        background: white;
+        color: var(--text-light);
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .action-btn:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        background-color: rgba(139, 0, 0, 0.05);
+    }
+    
+    .action-btn:active {
+        transform: scale(0.98);
+    }
+    
+    /* View all link */
+    .view-all-link {
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+        margin-top: 1.5rem;
+    }
+    
+    .view-all-link:hover {
+        gap: 0.875rem;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+    
+    .empty-state i {
+        font-size: 4.5rem;
+        color: #ddd;
+        margin-bottom: 1.5rem;
+    }
+    
+    .empty-state h4 {
+        color: var(--text-dark);
+        margin-bottom: 0.75rem;
+        font-size: 1.25rem;
+    }
+    
+    .empty-state p {
+        color: var(--text-light);
+        margin-bottom: 2rem;
+    }
+    
+    @media (max-width: 1400px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .page-wrapper {
+            flex-direction: column;
+        }
+        
+        .sidebar {
+            position: relative;
+            width: 100%;
+            min-height: auto;
+            height: auto;
+            border-right: none;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            overflow-x: auto;
+            overflow-y: visible;
+            padding: 1rem 0;
+            z-index: 900;
+        }
+        
+        .sidebar .menu-label {
+            display: none;
+        }
+        
+        .sidebar .menu-item {
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        
+        .main-content {
+            flex: 1;
+            margin-left: 0;
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+        
+        .stats-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+        
+        .content-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .content-header h2 {
+            font-size: 1.5rem;
+        }
+        
+        .btn-primary-action {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .main-content {
+            padding: 1rem;
+        }
+        
+        .section-content {
+            padding: 1.5rem;
+        }
+        
+        .publications-table {
+            font-size: 0.85rem;
+        }
+        
+        .publications-table th,
+        .publications-table td {
+            padding: 0.75rem;
+        }
+        
+        .action-buttons {
+            gap: 0.5rem;
+        }
+        
+        .action-btn {
+            padding: 0.4rem 0.75rem;
+            font-size: 0.75rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <div class="menu-label">Main</div>
+        <a href="{% url 'publication_list' %}" class="menu-item active">
+            <i class="bi bi-journals"></i>
+            <span>Publications</span>
+        </a>
+        
+        {% if user.can_upload %}
+        <!-- Faculty-Only Menu Items -->
+        <a href="{% url 'publication_create' %}" class="menu-item">
+            <i class="bi bi-cloud-upload"></i>
+            <span>Upload Publication</span>
+        </a>
+        
+        <div class="menu-label">Account</div>
+        <a href="{% url 'settings' %}" class="menu-item">
+            <i class="bi bi-gear"></i>
+            <span>Settings</span>
+        </a>
+        {% else %}
+        <!-- Viewer-Only Info -->
+        <div class="menu-item" style="color: #ccc; cursor: default; opacity: 0.6; padding: 1rem 1.5rem;">
+            <i class="bi bi-lock"></i>
+            <span>Viewer Access</span>
+        </div>
+        {% endif %}
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Alert Banner -->
+        <div class="alert-banner">
+            <div>
+                {% if user.can_upload %}
+                <p><i class="bi bi-hand-thumbs-up"></i> <strong>Welcome, {{ user.first_name|default:user.username }}!</strong></p>
+                <p style="margin-top: 0.25rem; font-size: 0.85rem;">Faculty dashboard - Manage your publications and track analytics.</p>
+                {% else %}
+                <p><i class="bi bi-compass-fill"></i> <strong>Welcome, {{ user.username }}!</strong></p>
+                <p style="margin-top: 0.25rem; font-size: 0.85rem;">Browse and explore research publications from EVSU faculty.</p>
+                {% endif %}
+            </div>
+            <button class="alert-close" onclick="this.parentElement.style.display='none';">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+
+        <!-- Header -->
+        <div class="content-header">
+            <div>
+                <h2>Publications</h2>
+                <p>{% if request.GET.q %}Search results for "{{ request.GET.q }}"{% elif user.can_upload %}Manage your research publications{% else %}Explore published research from EVSU faculty{% endif %}</p>
+            </div>
+            {% if user.can_upload %}
+            <a href="{% url 'publication_create' %}" class="btn-primary-action">
+                <i class="bi bi-plus-circle"></i> Upload Publication
+            </a>
+            {% endif %}
+        </div>
+
+        {% if user.can_upload %}
+        <!-- Stats Cards - FACULTY VIEW -->
+        <div class="stats-grid">
+            <div class="stat-card purple">
+                <div class="stat-label">Total Publications</div>
+                <div class="stat-number" id="total-pubs-count">{{ publications.count }}</div>
+                <div class="stat-change"><i class="bi bi-arrow-up-right"></i> Your uploads</div>
+            </div>
+            <div class="stat-card pink" style="cursor: pointer;" onclick="scrollToSection('access-requests')">
+                <div class="stat-label">Access Requests</div>
+                <div class="stat-number">0</div>
+                <div class="stat-change"><i class="bi bi-arrow-right"></i> Manage</div>
+            </div>
+            <div class="stat-card green" style="cursor: pointer;" onclick="scrollToSection('profile-status')">
+                <div class="stat-label">Profile Status</div>
+                <div class="stat-number">75%</div>
+                <div class="stat-change"><i class="bi bi-arrow-right"></i> Complete</div>
+            </div>
+        </div>
+
+        <!-- Filters Section - FACULTY VIEW -->
+        <div style="background: white; border-radius: 12px; padding: 1.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 2rem;">
+            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+                <i class="bi bi-funnel" style="font-size: 1.25rem; color: var(--primary);"></i>
+                <h5 style="margin: 0; font-weight: 700; color: var(--text-dark);">Filter Publications</h5>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
+                <!-- Status Filter -->
+                <div>
+                    <label style="font-weight: 600; color: var(--text-dark); font-size: 0.9rem; display: block; margin-bottom: 0.5rem;">
+                        <i class="bi bi-tag"></i> Status
+                    </label>
+                    <select id="status-filter" style="width: 100%; padding: 0.75rem; border: 1.5px solid var(--border); border-radius: 6px; font-size: 0.95rem; cursor: pointer;">
+                        <option value="all">All Publications</option>
+                        <option value="published">Published Only</option>
+                        <option value="draft">Drafts Only</option>
+                    </select>
+                </div>
+
+                <!-- Date From Filter -->
+                <div>
+                    <label style="font-weight: 600; color: var(--text-dark); font-size: 0.9rem; display: block; margin-bottom: 0.5rem;">
+                        <i class="bi bi-calendar-range"></i> From Date
+                    </label>
+                    <input type="date" id="date-from-filter" style="width: 100%; padding: 0.75rem; border: 1.5px solid var(--border); border-radius: 6px; font-size: 0.95rem;">
+                </div>
+
+                <!-- Date To Filter -->
+                <div>
+                    <label style="font-weight: 600; color: var(--text-dark); font-size: 0.9rem; display: block; margin-bottom: 0.5rem;">
+                        <i class="bi bi-calendar-range"></i> To Date
+                    </label>
+                    <input type="date" id="date-to-filter" style="width: 100%; padding: 0.75rem; border: 1.5px solid var(--border); border-radius: 6px; font-size: 0.95rem;">
+                </div>
+            </div>
+
+            <!-- Active Filters Badge & Clear Button -->
+            <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                <div id="active-filters" style="display: flex; gap: 0.5rem; flex-wrap: wrap;"></div>
+                <button id="clear-filters-btn" style="background: transparent; border: 1.5px solid #ddd; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 600; color: var(--text-light); transition: all 0.2s ease; display: none;"
+                    onmouseover="this.style.borderColor='var(--primary)'; this.style.color='var(--primary)';"
+                    onmouseout="this.style.borderColor='#ddd'; this.style.color='var(--text-light)';">
+                    <i class="bi bi-x-circle"></i> Clear Filters
+                </button>
+            </div>
+        </div>
+        {% else %}
+        <!-- Search Bar - VIEWER VIEW -->
+        <div style="background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 2rem;">
+            <form method="get" style="display: flex; gap: 0.75rem;">
+                <div style="flex: 1;">
+                    <input 
+                        type="text" 
+                        name="q" 
+                        value="{{ request.GET.q }}" 
+                        placeholder="Search by title, keywords, or author..."
+                        style="width: 100%; padding: 0.875rem 1.25rem; border: 1.5px solid var(--border); border-radius: 8px; font-size: 1rem;"
+                    >
+                </div>
+                <button 
+                    type="submit" 
+                    style="padding: 0.875rem 2rem; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.3s ease;"
+                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(139, 0, 0, 0.3)';"
+                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(139, 0, 0, 0.2)';"
+                >
+                    <i class="bi bi-search"></i> Search
+                </button>
+            </form>
+        </div>
+        {% endif %}
+
+        <!-- Publications Section -->
+        <div class="main-section">
+            <div class="section-header">
+                <i class="bi bi-clock-history"></i>
+                {% if user.can_upload %}Recent Publications{% else %}Published Research{% endif %}
+            </div>
+            <div class="section-content">
+                {% if publications %}
+                    {% if user.can_upload %}
+                    <!-- FACULTY VIEW - Table with CRUD & PAGINATION -->
+                    <table class="publications-table" id="publications-table">
+                        <thead>
+                            <tr>
+                                <th><i class="bi bi-file-text"></i> Title</th>
+                                <th><i class="bi bi-calendar"></i> Created</th>
+                                <th><i class="bi bi-tag"></i> Status</th>
+                                <th><i class="bi bi-lightning"></i> Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="publications-tbody">
+                            <!-- Rows populated by JavaScript -->
+                        </tbody>
+                    </table>
+
+                    <!-- Pagination Controls -->
+                    <div id="pagination-controls" style="display: flex; justify-content: center; align-items: center; gap: 1rem; margin-top: 2rem;">
+                        <button id="prev-page-btn" class="btn btn-outline-secondary" onclick="previousPage()" style="padding: 0.5rem 1rem; border-radius: 6px;" disabled>
+                            <i class="bi bi-chevron-left"></i> Previous
+                        </button>
+                        <div id="page-info" style="font-weight: 600; color: var(--text-dark); min-width: 150px; text-align: center;">
+                            Page 1 of 1
+                        </div>
+                        <button id="next-page-btn" class="btn btn-outline-secondary" onclick="nextPage()" style="padding: 0.5rem 1rem; border-radius: 6px;">
+                            Next <i class="bi bi-chevron-right"></i>
+                        </button>
+                    </div>
+
+                    <!-- Pagination JavaScript with Filtering -->
+                    <script>
+                        // Global pagination state
+                        let allPublications = [];
+                        let filteredPublications = [];
+                        let currentPage = 1;
+                        const itemsPerPage = 8;
+                        let totalPages = 1;
+
+                        // Filter state
+                        let currentFilters = {
+                            status: 'all',
+                            dateFrom: null,
+                            dateTo: null
+                        };
+
+                        // Initialize pagination
+                        function initPagination() {
+                            // Parse publications from the Django template context - convert QuerySet to array of objects
+                            const publications = [
+                                {% for pub in publications %}
+                                {
+                                    id: {{ pub.id }},
+                                    title: "{{ pub.title|escapejs }}",
+                                    abstract: "{{ pub.abstract|escapejs }}",
+                                    publication_date: "{{ pub.publication_date|date:'Y-m-d'|default:'' }}",
+                                    is_public: {{ pub.is_public|lower }},
+                                    uploader: "{{ pub.uploader.username }}"
+                                }{% if not forloop.last %},{% endif %}
+                                {% endfor %}
+                            ];
+                            
+                            if (Array.isArray(publications) && publications.length > 0) {
+                                allPublications = publications;
+                                loadFiltersFromURL();
+                                applyFilters();
+                                setupFilterListeners();
+                                updateStatsCard();
+                            }
+                        }
+
+                        // Load filters from URL parameters
+                        function loadFiltersFromURL() {
+                            const urlParams = new URLSearchParams(window.location.search);
+                            currentFilters.status = urlParams.get('status') || 'all';
+                            currentFilters.dateFrom = urlParams.get('dateFrom') || null;
+                            currentFilters.dateTo = urlParams.get('dateTo') || null;
+                            currentPage = parseInt(urlParams.get('page')) || 1;
+
+                            // Set filter UI values
+                            document.getElementById('status-filter').value = currentFilters.status;
+                            if (currentFilters.dateFrom) document.getElementById('date-from-filter').value = currentFilters.dateFrom;
+                            if (currentFilters.dateTo) document.getElementById('date-to-filter').value = currentFilters.dateTo;
+                        }
+
+                        // Apply filters to publications
+                        function applyFilters() {
+                            filteredPublications = allPublications.filter(pub => {
+                                // Status filter
+                                if (currentFilters.status === 'published' && !pub.is_public) return false;
+                                if (currentFilters.status === 'draft' && pub.is_public) return false;
+
+                                // Date filters - compare dates only (ignore time)
+                                const pubDate = pub.publication_date; // Format: YYYY-MM-DD
+                                
+                                if (currentFilters.dateFrom) {
+                                    // pubDate >= dateFrom
+                                    if (pubDate && pubDate < currentFilters.dateFrom) return false;
+                                }
+                                if (currentFilters.dateTo) {
+                                    // pubDate <= dateTo
+                                    if (pubDate && pubDate > currentFilters.dateTo) return false;
+                                }
+
+                                return true;
+                            });
+
+                            totalPages = Math.ceil(filteredPublications.length / itemsPerPage);
+                            currentPage = Math.min(Math.max(1, currentPage), Math.max(1, totalPages));
+                            
+                            renderTable();
+                            updatePaginationControls();
+                            updateActiveFilters();
+                        }
+
+                        // Setup filter event listeners
+                        function setupFilterListeners() {
+                            const statusFilter = document.getElementById('status-filter');
+                            const dateFromFilter = document.getElementById('date-from-filter');
+                            const dateToFilter = document.getElementById('date-to-filter');
+                            const clearBtn = document.getElementById('clear-filters-btn');
+
+                            statusFilter.addEventListener('change', function() {
+                                currentFilters.status = this.value;
+                                currentPage = 1;
+                                applyFilters();
+                                updateURL();
+                            });
+
+                            dateFromFilter.addEventListener('change', function() {
+                                currentFilters.dateFrom = this.value || null;
+                                currentPage = 1;
+                                applyFilters();
+                                updateURL();
+                            });
+
+                            dateToFilter.addEventListener('change', function() {
+                                currentFilters.dateTo = this.value || null;
+                                currentPage = 1;
+                                applyFilters();
+                                updateURL();
+                            });
+
+                            clearBtn.addEventListener('click', function() {
+                                currentFilters.status = 'all';
+                                currentFilters.dateFrom = null;
+                                currentFilters.dateTo = null;
+                                currentPage = 1;
+                                
+                                document.getElementById('status-filter').value = 'all';
+                                document.getElementById('date-from-filter').value = '';
+                                document.getElementById('date-to-filter').value = '';
+                                
+                                applyFilters();
+                                updateURL();
+                            });
+                        }
+
+                        // Update URL with current filters
+                        function updateURL() {
+                            const params = new URLSearchParams();
+                            if (currentPage > 1) params.set('page', currentPage);
+                            if (currentFilters.status !== 'all') params.set('status', currentFilters.status);
+                            if (currentFilters.dateFrom) params.set('dateFrom', currentFilters.dateFrom);
+                            if (currentFilters.dateTo) params.set('dateTo', currentFilters.dateTo);
+
+                            const newUrl = params.toString() ? `${window.location.pathname}?${params}` : window.location.pathname;
+                            window.history.replaceState({ page: currentPage }, '', newUrl);
+                        }
+
+                        // Update active filters display
+                        function updateActiveFilters() {
+                            const container = document.getElementById('active-filters');
+                            const clearBtn = document.getElementById('clear-filters-btn');
+                            const badges = [];
+
+                            if (currentFilters.status !== 'all') {
+                                badges.push(`Status: ${currentFilters.status === 'published' ? 'Published' : 'Draft'}`);
+                            }
+                            if (currentFilters.dateFrom) {
+                                badges.push(`From: ${currentFilters.dateFrom}`);
+                            }
+                            if (currentFilters.dateTo) {
+                                badges.push(`To: ${currentFilters.dateTo}`);
+                            }
+
+                            container.innerHTML = badges.map(badge => `
+                                <span style="background: rgba(139, 0, 0, 0.1); color: var(--primary); padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
+                                    ${badge}
+                                </span>
+                            `).join('');
+
+                            clearBtn.style.display = badges.length > 0 ? 'inline-block' : 'none';
+                        }
+
+                        // Update stats card
+                        function updateStatsCard() {
+                            document.getElementById('total-pubs-count').textContent = filteredPublications.length;
+                        }
+
+                        function renderTable() {
+                            const tbody = document.getElementById('publications-tbody');
+                            tbody.innerHTML = '';
+                            
+                            const startIndex = (currentPage - 1) * itemsPerPage;
+                            const endIndex = startIndex + itemsPerPage;
+                            const pageItems = filteredPublications.slice(startIndex, endIndex);
+
+                            if (pageItems.length === 0) {
+                                tbody.innerHTML = `
+                                    <tr>
+                                        <td colspan="4" style="text-align: center; padding: 2rem; color: var(--text-light);">
+                                            <i class="bi bi-inbox" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
+                                            No publications match your filters
+                                        </td>
+                                    </tr>
+                                `;
+                                return;
+                            }
+
+                            pageItems.forEach(pub => {
+                                const statusClass = pub.is_public ? 'badge-published' : 'badge-draft';
+                                const statusText = pub.is_public ? 'Published' : 'Draft';
+                                const pubDate = pub.publication_date ? new Date(pub.publication_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'Not set';
+                                
+                                const row = document.createElement('tr');
+                                row.innerHTML = `
+                                    <td>
+                                        <div class="pub-title"><a href="/publications/${pub.id}/" style="color: inherit; text-decoration: none;">${escapeHtml(pub.title)}</a></div>
+                                        <div class="pub-subtitle">${escapeHtml(pub.abstract.substring(0, 50))}...</div>
+                                    </td>
+                                    <td>${pubDate}</td>
+                                    <td><span class="badge ${statusClass}">${statusText}</span></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <a href="/publications/${pub.id}/" class="action-btn"><i class="bi bi-eye"></i> View</a>
+                                            <a href="/publications/${pub.id}/update/" class="action-btn"><i class="bi bi-pencil"></i> Edit</a>
+                                            <a href="/publications/${pub.id}/delete/" class="action-btn" onclick="return confirm('Delete this publication?');"><i class="bi bi-trash"></i> Delete</a>
+                                        </div>
+                                    </td>
+                                `;
+                                tbody.appendChild(row);
+                            });
+                        }
+
+                        function escapeHtml(text) {
+                            const div = document.createElement('div');
+                            div.textContent = text;
+                            return div.innerHTML;
+                        }
+
+                        function updatePaginationControls() {
+                            const pageInfo = document.getElementById('page-info');
+                            const prevBtn = document.getElementById('prev-page-btn');
+                            const nextBtn = document.getElementById('next-page-btn');
+                            
+                            pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+                            prevBtn.disabled = currentPage === 1;
+                            nextBtn.disabled = currentPage === totalPages;
+                            
+                            updateURL();
+                        }
+
+                        function nextPage() {
+                            if (currentPage < totalPages) {
+                                currentPage++;
+                                renderTable();
+                                updatePaginationControls();
+                                window.scrollTo({ top: document.querySelector('.publications-table').offsetTop - 100, behavior: 'smooth' });
+                            }
+                        }
+
+                        function previousPage() {
+                            if (currentPage > 1) {
+                                currentPage--;
+                                renderTable();
+                                updatePaginationControls();
+                                window.scrollTo({ top: document.querySelector('.publications-table').offsetTop - 100, behavior: 'smooth' });
+                            }
+                        }
+
+                        // Initialize on page load
+                        document.addEventListener('DOMContentLoaded', initPagination);
+                    </script>
+                    {% else %}
+                    <!-- VIEWER VIEW - Publication Cards with Abstracts -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem;">
+                        {% for publication in publications %}
+                        <div style="background: white; border-radius: 12px; border-top: 4px solid var(--primary); padding: 1.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.06); transition: all 0.3s ease; cursor: pointer;" 
+                             onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 12px 24px rgba(0,0,0,0.1)';"
+                             onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.06)';">
+                            
+                            <h3 style="margin: 0 0 0.75rem 0; font-size: 1.1rem; font-weight: 700; color: var(--text-dark);">
+                                {{ publication.title }}
+                            </h3>
+                            
+                            <div style="display: flex; align-items: center; gap: 1rem; color: var(--text-light); font-size: 0.9rem; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);">
+                                <span><i class="bi bi-person-circle"></i> {{ publication.uploader.username }}</span>
+                                {% if publication.created_at %}
+                                <span><i class="bi bi-calendar"></i> {{ publication.created_at|date:"M d, Y" }}</span>
+                                {% else %}
+                                <span><i class="bi bi-calendar"></i> <em>Date not available</em></span>
+                                {% endif %}
+                            </div>
+                            
+                            <p style="color: #555; line-height: 1.6; margin: 0 0 1.5rem 0; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; min-height: 6.4rem;">
+                                {{ publication.abstract }}
+                            </p>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                                <a href="{% url 'publication_detail' publication.id %}" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; padding: 0.75rem 1rem; border-radius: 6px; text-decoration: none; font-weight: 600; text-align: center; font-size: 0.9rem; transition: all 0.2s ease;"
+                                   onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(139, 0, 0, 0.3)';"
+                                   onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                                    <i class="bi bi-eye"></i> View Details
+                                </a>
+                                <a href="{% url 'login' %}" style="background: transparent; color: var(--primary); border: 2px solid var(--primary); padding: 0.75rem 1rem; border-radius: 6px; text-decoration: none; font-weight: 600; text-align: center; font-size: 0.9rem; transition: all 0.2s ease;"
+                                   onmouseover="this.style.backgroundColor='var(--primary)'; this.style.color='white';"
+                                   onmouseout="this.style.backgroundColor='transparent'; this.style.color='var(--primary)';">
+                                    <i class="bi bi-unlock"></i> Full Access
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-inbox"></i>
+                        <h4>{% if user.can_upload %}No Publications Yet{% else %}No Publications Available{% endif %}</h4>
+                        <p>{% if request.GET.q %}No results found for "{{ request.GET.q }}"{% elif user.can_upload %}Start sharing your research with the academic community{% else %}No publications are currently available. Check back later!{% endif %}</p>
+                        {% if user.can_upload %}
+                        <a href="{% url 'publication_create' %}" class="btn-primary-action">
+                            <i class="bi bi-cloud-upload"></i> Upload Your First Publication
+                        </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Access Requests Section - FACULTY VIEW ONLY -->
+        {% if user.can_upload %}
+        <div class="main-section" style="margin-top: 2.5rem;" id="access-requests">
+            <div class="section-header">
+                <i class="bi bi-inbox-in"></i> Access Requests from Viewers
+            </div>
+            <div class="section-content">
+                <p style="color: var(--text-light); margin-bottom: 1.5rem; font-size: 0.95rem;">
+                    <i class="bi bi-info-circle"></i> Manage requests from other researchers who want to view your full publications as reference material
+                </p>
+                <div id="access-requests-container">
+                    <div style="text-align: center; padding: 2rem;">
+                        <i class="bi bi-inbox" style="font-size: 2rem; color: #ddd; display: block; margin-bottom: 0.5rem;"></i>
+                        <p style="color: var(--text-light); margin: 0;">No pending access requests at this time.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Access Requests Template (for demonstration) -->
+        <template id="requestCardTemplate">
+            <div style="background: white; border-radius: 12px; border-left: 4px solid var(--primary); padding: 1.5rem; margin-bottom: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; justify-content: space-between; align-items: flex-start;">
+                <div style="flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+                        <div style="width: 40px; height: 40px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.1rem;">
+                            <span class="requester-initial">R</span>
+                        </div>
+                        <div>
+                            <p style="margin: 0; font-weight: 600; color: var(--text-dark);">
+                                <span class="requester-name">Researcher Name</span>
+                            </p>
+                            <p style="margin: 0; font-size: 0.85rem; color: var(--text-light);">
+                                <span class="requester-email">researcher@evsu.edu.ph</span>
+                            </p>
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <p style="margin: 0 0 0.25rem 0; font-size: 0.9rem; font-weight: 600; color: var(--text-dark);">
+                            <i class="bi bi-file-earmark-pdf text-danger"></i>
+                            <span class="publication-title">Research Publication</span>
+                        </p>
+                        <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem; color: var(--text-light);">
+                            <i class="bi bi-chat-dots"></i> Purpose: <span class="request-purpose">Reference material for research</span>
+                        </p>
+                        <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: var(--text-light);">
+                            <i class="bi bi-calendar"></i> <span class="request-date">June 4, 2026</span>
+                        </p>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 0.5rem; flex-direction: column;">
+                    <button class="approve-btn" style="background: var(--success); color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.2s ease;" onclick="this.style.opacity='0.8'">
+                        <i class="bi bi-check-circle"></i> Approve
+                    </button>
+                    <button class="reject-btn" style="background: #dc3545; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.2s ease;" onclick="this.style.opacity='0.8'">
+                        <i class="bi bi-x-circle"></i> Decline
+                    </button>
+                </div>
+            </div>
+        </template>
+
+        <script>
+            // Scroll to section functionality
+            function scrollToSection(sectionId) {
+                const element = document.getElementById(sectionId);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+
+            // Approve/Decline request handlers
+            document.addEventListener('DOMContentLoaded', function() {
+                // Approve request handler
+                document.addEventListener('click', function(e) {
+                    if (e.target.closest('.approve-btn')) {
+                        const requesterName = e.target.closest('.approve-btn').parentElement.parentElement.querySelector('.requester-name').textContent;
+                        alert('Access approved for ' + requesterName + '. They can now view the full publication.');
+                    }
+                });
+
+                // Decline request handler
+                document.addEventListener('click', function(e) {
+                    if (e.target.closest('.reject-btn')) {
+                        const requesterName = e.target.closest('.reject-btn').parentElement.parentElement.querySelector('.requester-name').textContent;
+                        if (confirm('Decline access request from ' + requesterName + '?')) {
+                            alert('Access request declined for ' + requesterName);
+                        }
+                    }
+                });
+            });
+        </script>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
