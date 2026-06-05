@@ -13,6 +13,8 @@ from django.utils.crypto import get_random_string
 from django.conf import settings
 from .models import Publication, User, AccessGrant
 from django.db.models import Q
+from django.contrib import messages
+from django.shortcuts import redirect
 from .forms import PublicationForm, AuthorshipFormSet, SignUpForm, LoginForm, UploadDocumentForm,AccessGrantForm
 
 
@@ -106,21 +108,44 @@ class PublicationDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView)
     def test_func(self):
         publication = self.get_object()
         user = self.request.user
-
-        # public publication
+        
         if publication.is_public:
             return True
 
-        # authenticated access rules
-        return (
+        if (publication.uploader == user or 
+            publication.authors.filter(user=user).exists() or 
+            publication.grants.filter(
+                viewer=user, 
+                access_granted=True, 
+                expires_at__gt=timezone.now()
+            ).exists()):
+            return True
+
+        if publication.auto_approve_access and user.is_authenticated and user.can_upload():
+            return True
+
+        return False
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        publication = self.object
+        user = self.request.user
+        
+        is_verified_faculty = user.is_authenticated and user.can_upload()
+        
+        context['can_view_pdf'] = (
+            user.is_superuser or
+            publication.is_public or
             publication.uploader == user or
             publication.authors.filter(user=user).exists() or
             publication.grants.filter(
-                viewer=user,
-                access_granted=True,
+                viewer=user, 
+                access_granted=True, 
                 expires_at__gt=timezone.now()
-            ).exists()
+            ).exists() or
+            (publication.auto_approve_access and is_verified_faculty)
         )
+        return context
     
 class PublicationCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     model = Publication
@@ -241,6 +266,29 @@ class AccessGrantCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView)
     
 class SettingsView(LoginRequiredMixin, TemplateView):
     template_name = 'research_repo/settings.html'
+    
+    def post(self, request, *args, **kwargs):
+        # Handle Faculty Verification Submission
+        if 'verify_submit' in request.POST:
+            id_doc = request.FILES.get('id_document')
+            if id_doc:
+                request.user.id_document = id_doc
+                request.user.save()
+                messages.success(request, "ID document uploaded successfully. Waiting for admin approval.")
+            else:
+                messages.error(request, "Please select an ID file to upload.")
+                
+        # Handle Profile Save (if you have logic for this)
+        elif 'profile_save' in request.POST:
+            # Your existing profile update logic
+            pass
+            
+        return redirect('settings')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # You can add extra context here if needed
+        return context
 
 class ProfileView(LoginRequiredMixin, TemplateView):
     template_name = 'research_repo/profile.html'

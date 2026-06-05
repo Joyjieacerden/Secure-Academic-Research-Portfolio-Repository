@@ -5,8 +5,6 @@ from datetime import timedelta
 from cloudinary_storage.storage import  MediaCloudinaryStorage
 from cloudinary.models import CloudinaryField
 
-
-
 class User(AbstractUser):
     is_faculty = models.BooleanField(default=False)
     is_identity_verified = models.BooleanField(default=False)

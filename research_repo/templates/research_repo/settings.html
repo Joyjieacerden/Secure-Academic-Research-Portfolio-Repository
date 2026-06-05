@@ -73,18 +73,19 @@
                         <form id="verificationForm" method="POST" enctype="multipart/form-data" action="{% url 'settings' %}">
                             {% csrf_token %}
                             <div class="mb-4">
-                                <label class="form-label">Upload ID Document</label>
-                                <div class="mb-3">
-                                    {% if user.id_document %}
-                                    <div class="alert alert-success mb-3">
-                                        <i class="bi bi-check-circle"></i> ID document uploaded
-                                    </div>
+                                <label class="form-label">Verification Status</label>
+                                <div class="d-flex align-items-center p-3" style="background: #f8f9fa; border-radius: 8px;">
+                                    {% if user.is_identity_verified %}
+                                        <span class="badge bg-success me-2"><i class="bi bi-check-circle"></i> Verified</span>
+                                        <span class="text-success">You are fully verified as faculty.</span>
+                                    {% elif user.id_document %}
+                                        <span class="badge bg-info me-2"><i class="bi bi-hourglass-split"></i> Awaiting Review</span>
+                                        <span class="text-info">ID submitted. Waiting for admin approval.</span>
+                                    {% else %}
+                                        <span class="badge bg-warning me-2"><i class="bi bi-clock"></i> Pending</span>
+                                        <span class="text-warning">Please upload your ID to request verification.</span>
                                     {% endif %}
-                                    <input type="file" class="form-control" name="id_document" id="id_document" accept="image/*,.pdf" placeholder="Choose file">
                                 </div>
-                                <small class="form-text text-muted">
-                                    Accepted formats: JPG, PNG, PDF (Max 5MB)
-                                </small>
                             </div>
 
                             <!-- Verification Status -->
